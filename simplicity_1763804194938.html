@@ -1,0 +1,1396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Simplicity-1A by Simplicity</title>
+
+  <!-- Open Graph (used by Discord, Facebook, etc.) -->
+  <meta property="og:title" content="Simplicity-1a by Simplicity" />
+  <meta property="og:description" content="Meet Simplicity-1A, a blazing-fast, lightweight AI model designed for performance and simplicity." />
+  <meta property="og:image" content="https://simplicity-1a.netlify.app/image.png" />
+  <meta property="og:url" content="https://simplicity-1a.netlify.app/simplicity.html" />
+  <meta property="og:type" content="website" />
+
+  <!-- Twitter Card (optional but recommended) -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Simplicity-1A – Fast, Lightweight AI by Simplicity" />
+  <meta name="twitter:description" content="Meet Simplicity-1A, a blazing-fast, lightweight AI model designed for performance and simplicity." />
+  <meta property="og:image" content="https://simplicity-1a.netlify.app/image.png" />
+</head>
+<style>
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #0a0a0a;
+            color: #ffffff;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* STRONG neural network lines */
+        .neural-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .neural-line {
+            position: absolute;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+        }
+
+        .neural-line.h1 {
+            width: 100%;
+            height: 2px;
+            top: 15%;
+            animation: sweep-right 6s ease-in-out infinite;
+        }
+
+        .neural-line.h2 {
+            width: 100%;
+            height: 2px;
+            top: 65%;
+            animation: sweep-left 8s ease-in-out infinite;
+        }
+
+        .neural-line.h3 {
+            width: 100%;
+            height: 1px;
+            top: 40%;
+            animation: sweep-right 10s ease-in-out infinite 2s;
+        }
+
+        .neural-line.v1 {
+            width: 2px;
+            height: 100%;
+            left: 25%;
+            animation: sweep-down 9s ease-in-out infinite;
+        }
+
+        .neural-line.v2 {
+            width: 2px;
+            height: 100%;
+            left: 75%;
+            animation: sweep-up 7s ease-in-out infinite;
+        }
+
+        .neural-line.v3 {
+            width: 1px;
+            height: 100%;
+            left: 50%;
+            animation: sweep-down 11s ease-in-out infinite 3s;
+        }
+
+        @keyframes sweep-right {
+            0% { 
+                transform: translateX(-100%); 
+                opacity: 0; 
+                box-shadow: 0 0 0px rgba(255, 255, 255, 0);
+            }
+            15% { 
+                opacity: 0.8; 
+                box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+            }
+            50% { 
+                transform: translateX(0); 
+                opacity: 0.6; 
+                box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
+            }
+            85% { 
+                opacity: 0.8; 
+                box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+            }
+            100% { 
+                transform: translateX(100%); 
+                opacity: 0; 
+                box-shadow: 0 0 0px rgba(255, 255, 255, 0);
+            }
+        }
+
+        @keyframes sweep-left {
+            0% { 
+                transform: translateX(100%); 
+                opacity: 0; 
+                box-shadow: 0 0 0px rgba(255, 255, 255, 0);
+            }
+            15% { 
+                opacity: 0.7; 
+                box-shadow: 0 0 25px rgba(255, 255, 255, 0.25);
+            }
+            50% { 
+                transform: translateX(0); 
+                opacity: 0.5; 
+                box-shadow: 0 0 18px rgba(255, 255, 255, 0.18);
+            }
+            85% { 
+                opacity: 0.7; 
+                box-shadow: 0 0 25px rgba(255, 255, 255, 0.25);
+            }
+            100% { 
+                transform: translateX(-100%); 
+                opacity: 0; 
+                box-shadow: 0 0 0px rgba(255, 255, 255, 0);
+            }
+        }
+
+        @keyframes sweep-down {
+            0% { 
+                transform: translateY(-100%); 
+                opacity: 0; 
+                box-shadow: 0 0 0px rgba(255, 255, 255, 0);
+            }
+            15% { 
+                opacity: 0.6; 
+                box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
+            }
+            50% { 
+                transform: translateY(0); 
+                opacity: 0.4; 
+                box-shadow: 0 0 12px rgba(255, 255, 255, 0.15);
+            }
+            85% { 
+                opacity: 0.6; 
+                box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
+            }
+            100% { 
+                transform: translateY(100%); 
+                opacity: 0; 
+                box-shadow: 0 0 0px rgba(255, 255, 255, 0);
+            }
+        }
+
+        @keyframes sweep-up {
+            0% { 
+                transform: translateY(100%); 
+                opacity: 0; 
+                box-shadow: 0 0 0px rgba(255, 255, 255, 0);
+            }
+            15% { 
+                opacity: 0.8; 
+                box-shadow: 0 0 22px rgba(255, 255, 255, 0.28);
+            }
+            50% { 
+                transform: translateY(0); 
+                opacity: 0.6; 
+                box-shadow: 0 0 16px rgba(255, 255, 255, 0.2);
+            }
+            85% { 
+                opacity: 0.8; 
+                box-shadow: 0 0 22px rgba(255, 255, 255, 0.28);
+            }
+            100% { 
+                transform: translateY(-100%); 
+                opacity: 0; 
+                box-shadow: 0 0 0px rgba(255, 255, 255, 0);
+            }
+        }
+
+        /* Scroll progress indicator */
+        .scroll-progress {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 0%;
+            height: 3px;
+            background: linear-gradient(90deg, #ffffff, rgba(255,255,255,0.7));
+            z-index: 1000;
+            transition: width 0.1s ease;
+            box-shadow: 0 0 10px rgba(255,255,255,0.5);
+        }
+
+        /* Data points */
+        .data-point {
+            position: fixed;
+            width: 4px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 1;
+            box-shadow: 0 0 8px rgba(255, 255, 255, 0.4);
+        }
+
+        .data-point.active {
+            animation: data-drift 12s linear;
+        }
+
+        @keyframes data-drift {
+            0% {
+                opacity: 0;
+                transform: scale(0);
+                box-shadow: 0 0 0px rgba(255, 255, 255, 0);
+            }
+            10% {
+                opacity: 1;
+                transform: scale(1);
+                box-shadow: 0 0 12px rgba(255, 255, 255, 0.6);
+            }
+            50% {
+                opacity: 0.8;
+                transform: scale(1.2);
+                box-shadow: 0 0 16px rgba(255, 255, 255, 0.5);
+            }
+            90% {
+                opacity: 1;
+                transform: scale(1);
+                box-shadow: 0 0 12px rgba(255, 255, 255, 0.6);
+            }
+            100% {
+                opacity: 0;
+                transform: scale(0);
+                box-shadow: 0 0 0px rgba(255, 255, 255, 0);
+            }
+        }
+
+        /* Pulse grid overlay */
+        .pulse-grid {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+            background-image: 
+                linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+            background-size: 50px 50px;
+            animation: grid-pulse 8s ease-in-out infinite;
+        }
+
+        @keyframes grid-pulse {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 0.6; }
+        }
+
+        /* Header */
+        .header {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            padding: 25px 50px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            z-index: 100;
+            transition: all 0.3s ease;
+        }
+
+        .header.scrolled {
+            background: rgba(0,0,0,0.9);
+            border-bottom-color: rgba(255,255,255,0.2);
+        }
+
+        .logo {
+            font-size: 18px;
+            font-weight: 300;
+            letter-spacing: -0.2px;
+            color: #ffffff;
+        }
+
+        .status {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.5);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        /* Sections */
+        .section {
+            min-height: 100vh;
+            position: relative;
+            z-index: 2;
+            padding: 0 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Hero Section */
+        .hero-section {
+            text-align: center;
+        }
+
+        .hero-title {
+            font-size: clamp(80px, 15vw, 200px);
+            font-weight: 200;
+            letter-spacing: -6px;
+            margin-bottom: 20px;
+            color: #ffffff;
+            position: relative;
+            animation: title-pulse 6s ease-in-out infinite;
+        }
+
+        @keyframes title-pulse {
+            0%, 100% { 
+                opacity: 1;
+                transform: scale(1);
+            }
+            50% { 
+                opacity: 0.95;
+                transform: scale(1.002);
+            }
+        }
+
+        .hero-subtitle {
+            font-size: 22px;
+            font-weight: 300;
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 60px;
+            letter-spacing: 1px;
+        }
+
+        .notify-section {
+            max-width: 400px;
+            width: 100%;
+            margin-bottom: 60px;
+        }
+
+        .notify-input {
+            width: 100%;
+            padding: 18px 20px;
+            background: rgba(20, 20, 20, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 0;
+            color: #ffffff;
+            font-size: 15px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(20px);
+            transition: all 0.3s ease;
+        }
+
+        .notify-input:focus {
+            outline: none;
+            border-color: rgba(255, 255, 255, 0.5);
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
+        }
+
+        .notify-input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .notify-btn {
+            width: 100%;
+            padding: 18px 20px;
+            background: #ffffff;
+            color: #000000;
+            border: none;
+            border-radius: 0;
+            font-size: 15px;
+            font-weight: 400;
+            cursor: pointer;
+            transition: all 0.4s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .notify-btn:hover {
+            background: #f0f0f0;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255,255,255,0.15);
+        }
+
+        /* Model Preview */
+        .model-preview {
+            background: rgba(15, 15, 15, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            max-width: 450px;
+            width: 100%;
+            backdrop-filter: blur(20px);
+            position: relative;
+            animation: card-float 8s ease-in-out infinite;
+        }
+
+        @keyframes card-float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-8px); }
+        }
+
+        .model-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .model-icon {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #1a1a1a, #000);
+            margin-right: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'SF Mono', monospace;
+            font-size: 14px;
+            font-weight: 600;
+            color: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .model-icon::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            animation: processing-sweep 2.5s ease-in-out infinite;
+        }
+
+        @keyframes processing-sweep {
+            0% { left: -100%; }
+            50% { left: 100%; }
+            100% { left: 100%; }
+        }
+
+        .model-info h3 {
+            font-size: 20px;
+            font-weight: 300;
+            margin-bottom: 3px;
+            letter-spacing: -0.3px;
+        }
+
+        .model-tag {
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.5);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .model-description {
+            font-size: 14px;
+            line-height: 1.6;
+            color: rgba(255, 255, 255, 0.7);
+            font-weight: 300;
+        }
+
+        /* Capabilities Section */
+        .capabilities-section {
+            background: linear-gradient(135deg, rgba(20, 20, 20, 0.9), rgba(10, 10, 10, 0.9));
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .section-title {
+            font-size: clamp(60px, 8vw, 120px);
+            font-weight: 200;
+            letter-spacing: -4px;
+            margin-bottom: 60px;
+            color: #ffffff;
+            text-align: center;
+            opacity: 0;
+            transform: translateY(100px);
+            transition: all 1s cubic-bezier(0.165, 0.84, 0.44, 1);
+        }
+
+        .section-title.animate {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .capabilities-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 40px;
+            max-width: 1200px;
+            width: 100%;
+        }
+
+        .capability-card {
+            background: rgba(15, 15, 15, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 40px 30px;
+            backdrop-filter: blur(20px);
+            position: relative;
+            overflow: hidden;
+            opacity: 0;
+            transform: translateX(-100px) rotateY(-15deg);
+            transition: all 0.8s cubic-bezier(0.165, 0.84, 0.44, 1);
+        }
+
+        .capability-card:nth-child(even) {
+            transform: translateX(100px) rotateY(15deg);
+        }
+
+        .capability-card.animate {
+            opacity: 1;
+            transform: translateX(0) rotateY(0deg);
+        }
+
+        .capability-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
+            transition: left 0.6s ease;
+        }
+
+        .capability-card:hover::before {
+            left: 100%;
+        }
+
+        .capability-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05));
+            border: 1px solid rgba(255,255,255,0.2);
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .capability-title {
+            font-size: 24px;
+            font-weight: 300;
+            margin-bottom: 15px;
+            letter-spacing: -0.5px;
+        }
+
+        .capability-description {
+            font-size: 16px;
+            line-height: 1.6;
+            color: rgba(255, 255, 255, 0.7);
+            font-weight: 300;
+        }
+
+        /* Horizontal scrolling section */
+        .horizontal-scroll-container {
+            position: relative;
+            height: 300vh;
+        }
+
+        .horizontal-scroll-content {
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            background: rgba(5, 5, 5, 0.95);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .horizontal-scroll-track {
+            display: flex;
+            will-change: transform;
+            height: 100%;
+        }
+
+        .horizontal-panel {
+            min-width: 100vw;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 50px;
+            position: relative;
+        }
+
+        /* Flow node styles */
+        .flow-node {
+            max-width: 600px;
+            width: 100%;
+            background: rgba(15, 15, 15, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .flow-node::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            animation: scan-line 3s ease-in-out infinite;
+        }
+
+        @keyframes scan-line {
+            0% { transform: translateX(-100%); }
+            50% { transform: translateX(100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .node-header {
+            display: flex;
+            align-items: center;
+            padding: 20px 30px 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .node-indicator {
+            width: 12px;
+            height: 12px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            margin-right: 15px;
+            position: relative;
+        }
+
+        .node-indicator::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 4px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.8);
+            transform: translate(-50%, -50%);
+            animation: pulse-dot 2s ease-in-out infinite;
+        }
+
+        .node-indicator.processing::before {
+            animation: pulse-dot 0.8s ease-in-out infinite;
+            background: rgba(255, 255, 255, 0.9);
+        }
+
+        .node-indicator.output::before {
+            animation: pulse-dot 1.5s ease-in-out infinite;
+            background: rgba(255, 255, 255, 0.7);
+        }
+
+        @keyframes pulse-dot {
+            0%, 100% { 
+                opacity: 0.3; 
+                transform: translate(-50%, -50%) scale(0.8); 
+            }
+            50% { 
+                opacity: 1; 
+                transform: translate(-50%, -50%) scale(1.2); 
+            }
+        }
+
+        .node-label {
+            font-size: 11px;
+            font-weight: 400;
+            letter-spacing: 2px;
+            color: rgba(255, 255, 255, 0.6);
+            text-transform: uppercase;
+        }
+
+        .node-body {
+            padding: 30px;
+        }
+
+        .panel-title {
+            font-size: clamp(32px, 4vw, 48px);
+            font-weight: 200;
+            margin-bottom: 20px;
+            letter-spacing: -1px;
+            color: #ffffff;
+        }
+
+        .panel-text {
+            font-size: 16px;
+            line-height: 1.7;
+            color: rgba(255, 255, 255, 0.7);
+            font-weight: 300;
+            margin-bottom: 30px;
+        }
+
+        /* Flow visualizations */
+        .data-flow {
+            position: relative;
+            height: 40px;
+            margin-top: 20px;
+        }
+
+        .flow-line {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transform: translateY(-50%);
+        }
+
+        .flow-dots {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 100%;
+            padding: 0 20px;
+        }
+
+        .dot {
+            width: 6px;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.4);
+            border-radius: 50%;
+            animation: flow-pulse 2s ease-in-out infinite;
+        }
+
+        .dot:nth-child(2) { animation-delay: 0.3s; }
+        .dot:nth-child(3) { animation-delay: 0.6s; }
+
+        @keyframes flow-pulse {
+            0%, 100% { opacity: 0.3; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.5); }
+        }
+
+        /* Processing visualization */
+        .processing-viz {
+            height: 60px;
+            position: relative;
+        }
+
+        .neural-connections {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            height: 100%;
+            align-items: center;
+        }
+
+        .connection {
+            height: 2px;
+            background: linear-gradient(90deg, rgba(255,255,255,0.1), rgba(255,255,255,0.4), rgba(255,255,255,0.1));
+            position: relative;
+            overflow: hidden;
+        }
+
+        .connection::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.8), transparent);
+            animation: neural-pulse 2s ease-in-out infinite;
+        }
+
+        .connection:nth-child(2)::before { animation-delay: 0.2s; }
+        .connection:nth-child(3)::before { animation-delay: 0.4s; }
+        .connection:nth-child(4)::before { animation-delay: 0.6s; }
+
+        @keyframes neural-pulse {
+            0% { left: -100%; }
+            50% { left: 100%; }
+            100% { left: 100%; }
+        }
+
+        /* Output stream */
+        .output-stream {
+            height: 50px;
+            position: relative;
+        }
+
+        .stream-lines {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            height: 100%;
+            justify-content: center;
+        }
+
+        .stream-line {
+            height: 2px;
+            background: linear-gradient(90deg, rgba(255,255,255,0.6), transparent);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stream-line:nth-child(1) { width: 100%; }
+        .stream-line:nth-child(2) { width: 80%; }
+        .stream-line:nth-child(3) { width: 60%; }
+
+        .stream-line::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -50px;
+            width: 50px;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.9));
+            animation: stream-flow 1.5s ease-out infinite;
+        }
+
+        .stream-line:nth-child(2)::before { animation-delay: 0.2s; }
+        .stream-line:nth-child(3)::before { animation-delay: 0.4s; }
+
+        @keyframes stream-flow {
+            0% { left: -50px; }
+            70% { left: 100%; }
+            100% { left: 100%; }
+        }
+
+        /* Vision Section */
+        .vision-section {
+            background: linear-gradient(45deg, rgba(10, 10, 10, 0.95), rgba(25, 25, 25, 0.95));
+            text-align: center;
+        }
+
+        .vision-content {
+            max-width: 800px;
+            width: 100%;
+        }
+
+        .vision-text {
+            font-size: 28px;
+            line-height: 1.6;
+            font-weight: 200;
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 40px;
+            opacity: 0;
+            transform: translateY(50px);
+            transition: all 1s cubic-bezier(0.165, 0.84, 0.44, 1);
+        }
+
+        .vision-text.animate {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Architecture Section */
+        .architecture-section {
+            background: rgba(5, 5, 5, 0.98);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .architecture-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+            max-width: 1000px;
+            width: 100%;
+        }
+
+        .arch-node {
+            background: rgba(20, 20, 20, 0.9);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            padding: 30px 25px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            opacity: 0;
+            transform: scale(0.8) rotateX(45deg);
+            transition: all 0.8s cubic-bezier(0.165, 0.84, 0.44, 1);
+        }
+
+        .arch-node.animate {
+            opacity: 1;
+            transform: scale(1) rotateX(0deg);
+        }
+
+        .arch-node::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: conic-gradient(transparent, rgba(255,255,255,0.1), transparent);
+            animation: rotate-border 4s linear infinite;
+        }
+
+        @keyframes rotate-border {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .arch-node-content {
+            position: relative;
+            z-index: 2;
+        }
+
+        .arch-title {
+            font-size: 18px;
+            font-weight: 400;
+            margin-bottom: 10px;
+        }
+
+        .arch-desc {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.6);
+            line-height: 1.4;
+        }
+
+        /* Scroll reveal animations */
+        .reveal {
+            opacity: 0;
+            transform: translateY(100px);
+            transition: all 1s cubic-bezier(0.165, 0.84, 0.44, 1);
+        }
+
+        .reveal.animate {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        @media (max-width: 768px) {
+            .header { padding: 20px; }
+            .notify-section, .model-preview { margin: 0 20px; }
+            .capabilities-grid { grid-template-columns: 1fr; gap: 30px; }
+            .architecture-grid { grid-template-columns: 1fr; }
+            .horizontal-panel { padding: 0 20px; }
+            .node-body { padding: 20px; }
+            .panel-title { font-size: 28px; }
+            .panel-text { font-size: 14px; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Scroll progress indicator -->
+    <div class="scroll-progress"></div>
+
+    <!-- Neural network background -->
+    <div class="neural-bg">
+        <div class="neural-line h1"></div>
+        <div class="neural-line h2"></div>
+        <div class="neural-line h3"></div>
+        <div class="neural-line v1"></div>
+        <div class="neural-line v2"></div>
+        <div class="neural-line v3"></div>
+    </div>
+
+    <!-- Pulsing grid overlay -->
+    <div class="pulse-grid"></div>
+
+    <header class="header">
+        <div class="logo">Simplicity</div>
+        <div class="status">In Development</div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="section hero-section">
+        <h1 class="hero-title">Simplicity</h1>
+        <p class="hero-subtitle">Intelligence without complexity</p>
+
+        <div class="notify-section">
+            <input type="email" class="notify-input" placeholder="Enter your email for early access">
+            <button class="notify-btn">Notify Me</button>
+        </div>
+
+        <div class="model-preview">
+            <div class="model-header">
+                <div class="model-icon">S1</div>
+                <div class="model-info">
+                    <h3>Simplicity-1a</h3>
+                    <div class="model-tag">In Development</div>
+                </div>
+            </div>
+            <p class="model-description">
+                Pure intelligence distilled. No unnecessary complexity, no bloated features. 
+                Currently being refined to understand and respond with unmatched precision.
+            </p>
+        </div>
+    </section>
+
+    <!-- Capabilities Section -->
+    <section class="section capabilities-section">
+        <h2 class="section-title reveal">Capabilities</h2>
+        <div class="capabilities-grid">
+            <div class="capability-card">
+                <div class="capability-icon"></div>
+                <h3 class="capability-title">Pure Reasoning</h3>
+                <p class="capability-description">Advanced logical processing without unnecessary computational overhead. Every token counts, every response refined.</p>
+            </div>
+            <div class="capability-card">
+                <div class="capability-icon"></div>
+                <h3 class="capability-title">Lightning Fast</h3>
+                <p class="capability-description">Optimized architecture delivers instant responses while maintaining accuracy. Speed meets intelligence.</p>
+            </div>
+            <div class="capability-card">
+                <div class="capability-icon"></div>
+                <h3 class="capability-title">Precision Focus</h3>
+                <p class="capability-description">Eliminates noise and delivers exactly what you need. No fluff, no excessive verbosity—just pure insight.</p>
+            </div>
+            <div class="capability-card">
+                <div class="capability-icon"></div>
+                <h3 class="capability-title">Intuitive Understanding</h3>
+                <p class="capability-description">Grasps context and nuance naturally, responding as if it truly comprehends your intent.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Horizontal Scroll Section -->
+    <div class="horizontal-scroll-container">
+        <div class="horizontal-scroll-content">
+            <div class="horizontal-scroll-track">
+                <!-- Input Panel -->
+                <div class="horizontal-panel">
+                    <div class="panel-content">
+                        <div class="flow-node input-node">
+                            <div class="node-header">
+                                <div class="node-indicator"></div>
+                                <span class="node-label">INPUT</span>
+                            </div>
+                            <div class="node-body">
+                                <h2 class="panel-title">Data Ingestion</h2>
+                                <p class="panel-text">Raw information flows into the system through optimized input channels, preprocessed for maximum efficiency.</p>
+                                <div class="data-flow">
+                                    <div class="flow-line"></div>
+                                    <div class="flow-dots">
+                                        <span class="dot"></span>
+                                        <span class="dot"></span>
+                                        <span class="dot"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Processing Panel -->
+                <div class="horizontal-panel">
+                    <div class="panel-content">
+                        <div class="flow-node processing-node">
+                            <div class="node-header">
+                                <div class="node-indicator processing"></div>
+                                <span class="node-label">PROCESSING</span>
+                            </div>
+                            <div class="node-body">
+                                <h2 class="panel-title">Neural Processing</h2>
+                                <p class="panel-text">Advanced algorithms analyze patterns and relationships with unprecedented efficiency and precision.</p>
+                                <div class="processing-viz">
+                                    <div class="neural-connections">
+                                        <div class="connection"></div>
+                                        <div class="connection"></div>
+                                        <div class="connection"></div>
+                                        <div class="connection"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Output Panel -->
+                <div class="horizontal-panel">
+                    <div class="panel-content">
+                        <div class="flow-node output-node">
+                            <div class="node-header">
+                                <div class="node-indicator output"></div>
+                                <span class="node-label">OUTPUT</span>
+                            </div>
+                            <div class="node-body">
+                                <h2 class="panel-title">Intelligent Response</h2>
+                                <p class="panel-text">Refined insights delivered with clarity and purpose. Every response optimized for maximum value.</p>
+                                <div class="output-stream">
+                                    <div class="stream-lines">
+                                        <div class="stream-line"></div>
+                                        <div class="stream-line"></div>
+                                        <div class="stream-line"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Vision Section -->
+    <section class="section vision-section">
+        <div class="vision-content">
+            <h2 class="section-title reveal">Our Vision</h2>
+            <p class="vision-text reveal">
+                In a world drowning in complexity, we choose clarity. Every interaction should feel natural, 
+                every response should add value, and every moment should bring you closer to your goals.
+            </p>
+        </div>
+    </section>
+
+    <!-- Architecture Section -->
+    <section class="section architecture-section">
+        <h2 class="section-title reveal">Architecture</h2>
+        <div class="architecture-grid">
+            <div class="arch-node">
+                <div class="arch-node-content">
+                    <h3 class="arch-title">Neural Core</h3>
+                    <p class="arch-desc">Streamlined transformer architecture with optimized attention mechanisms</p>
+                </div>
+            </div>
+            <div class="arch-node">
+                <div class="arch-node-content">
+                    <h3 class="arch-title">Memory Layer</h3>
+                    <p class="arch-desc">Efficient context retention without computational bloat</p>
+                </div>
+            </div>
+            <div class="arch-node">
+                <div class="arch-node-content">
+                    <h3 class="arch-title">Response Engine</h3>
+                    <p class="arch-desc">Precision-tuned output generation for maximum clarity</p>
+                </div>
+            </div>
+            <div class="arch-node">
+                <div class="arch-node-content">
+                    <h3 class="arch-title">Optimization Layer</h3>
+                    <p class="arch-desc">Real-time performance tuning and resource management</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        // Scroll progress indicator
+        function updateScrollProgress() {
+            const scrollTop = window.pageYOffset;
+            const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+            const scrollPercent = (scrollTop / docHeight) * 100;
+            document.querySelector('.scroll-progress').style.width = scrollPercent + '%';
+        }
+
+        // Header scroll effect
+        function updateHeader() {
+            const header = document.querySelector('.header');
+            if (window.scrollY > 100) {
+                header.classList.add('scrolled');
+            } else {
+                header.classList.remove('scrolled');
+            }
+        }
+
+        // Intersection Observer for reveal animations
+        const revealObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('animate');
+                }
+            });
+        }, {
+            threshold: 0.1,
+            rootMargin: '0px 0px -100px 0px'
+        });
+
+        // Observe all reveal elements
+        document.querySelectorAll('.reveal, .capability-card, .arch-node, .vision-text').forEach(el => {
+            revealObserver.observe(el);
+        });
+
+        // Horizontal scroll effect
+        function updateHorizontalScroll() {
+            const container = document.querySelector('.horizontal-scroll-container');
+            const track = document.querySelector('.horizontal-scroll-track');
+            
+            if (!container || !track) return;
+            
+            const containerTop = container.offsetTop;
+            const containerHeight = container.offsetHeight;
+            const scrollY = window.pageYOffset;
+            
+            if (scrollY >= containerTop && scrollY <= containerTop + containerHeight) {
+                const progress = (scrollY - containerTop) / containerHeight;
+                const translateX = -progress * (track.children.length - 1) * 100;
+                track.style.transform = `translateX(${Math.max(Math.min(translateX, 0), -(track.children.length - 1) * 100)}vw)`;
+            }
+        }
+
+        // Parallax effect for neural background
+        function updateParallax() {
+            const scrollY = window.pageYOffset;
+            const neural = document.querySelector('.neural-bg');
+            if (neural) {
+                neural.style.transform = `translateY(${scrollY * 0.5}px)`;
+            }
+        }
+
+        // Enhanced data points with scroll interaction
+        function createDataPoint() {
+            const point = document.createElement('div');
+            point.className = 'data-point active';
+            
+            const x = Math.random() * window.innerWidth;
+            const y = Math.random() * window.innerHeight;
+            
+            point.style.left = x + 'px';
+            point.style.top = y + 'px';
+            
+            const scrollInfluence = window.pageYOffset * 0.1;
+            const moveX = (Math.random() - 0.5) * (400 + scrollInfluence);
+            const moveY = (Math.random() - 0.5) * (400 + scrollInfluence);
+            
+            point.style.transform = `translate(0, 0)`;
+            
+            setTimeout(() => {
+                point.style.transition = 'transform 12s linear';
+                point.style.transform = `translate(${moveX}px, ${moveY}px)`;
+            }, 100);
+            
+            document.body.appendChild(point);
+            
+            setTimeout(() => {
+                if (point.parentNode) {
+                    point.parentNode.removeChild(point);
+                }
+            }, 12000);
+        }
+
+        // Enhanced scroll event handler
+        function handleScroll() {
+            updateScrollProgress();
+            updateHeader();
+            updateHorizontalScroll();
+            updateParallax();
+            
+            // Trigger more data points on scroll
+            if (Math.random() > 0.7) {
+                createDataPoint();
+            }
+        }
+
+        // Throttled scroll handler for performance
+        let ticking = false;
+        function requestTick() {
+            if (!ticking) {
+                requestAnimationFrame(handleScroll);
+                ticking = true;
+                setTimeout(() => { ticking = false; }, 16);
+            }
+        }
+
+        // Event listeners
+        window.addEventListener('scroll', requestTick);
+        window.addEventListener('resize', () => {
+            requestTick();
+        });
+
+        // Enhanced notify button effect
+        document.querySelector('.notify-btn').addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            // Create multiple ripples
+            for (let i = 0; i < 3; i++) {
+                setTimeout(() => {
+                    const ripple = document.createElement('span');
+                    const rect = this.getBoundingClientRect();
+                    const size = Math.max(rect.width, rect.height) * (1 + i * 0.5);
+                    const x = e.clientX - rect.left - size / 2;
+                    const y = e.clientY - rect.top - size / 2;
+                    
+                    ripple.style.cssText = `
+                        position: absolute;
+                        border-radius: 50%;
+                        background: rgba(255,255,255,${0.3 - i * 0.1});
+                        width: ${size}px;
+                        height: ${size}px;
+                        left: ${x}px;
+                        top: ${y}px;
+                        transform: scale(0);
+                        animation: ripple-effect ${0.8 + i * 0.2}s ease-out;
+                        pointer-events: none;
+                    `;
+                    this.appendChild(ripple);
+                    setTimeout(() => ripple.remove(), 1000);
+                }, i * 100);
+            }
+            
+            // Email validation and submission logic
+            const email = document.querySelector('.notify-input').value;
+            if (email && email.includes('@')) {
+                this.textContent = 'Subscribed!';
+                this.style.background = '#4CAF50';
+                setTimeout(() => {
+                    this.textContent = 'Notify Me';
+                    this.style.background = '#ffffff';
+                }, 2000);
+            }
+        });
+
+        // Ripple animation keyframes
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes ripple-effect {
+                to { 
+                    transform: scale(2); 
+                    opacity: 0; 
+                }
+            }
+            
+            @media (prefers-reduced-motion: reduce) {
+                *, *::before, *::after {
+                    animation-duration: 0.01ms !important;
+                    animation-iteration-count: 1 !important;
+                    transition-duration: 0.01ms !important;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Initialize enhanced data points
+        document.addEventListener('DOMContentLoaded', () => {
+            // Create initial burst of data points
+            for (let i = 0; i < 8; i++) {
+                setTimeout(createDataPoint, i * 200);
+            }
+            
+            // Add mouse interaction effects
+            document.addEventListener('mousemove', (e) => {
+                if (Math.random() > 0.98) {
+                    const point = document.createElement('div');
+                    point.className = 'data-point active';
+                    point.style.left = e.clientX + 'px';
+                    point.style.top = e.clientY + 'px';
+                    point.style.animation = 'data-drift 3s linear';
+                    document.body.appendChild(point);
+                    
+                    setTimeout(() => {
+                        if (point.parentNode) {
+                            point.parentNode.removeChild(point);
+                        }
+                    }, 3000);
+                }
+            });
+        });
+
+        // Enhanced spawn data points with scroll-based frequency
+        setInterval(() => {
+            const scrollSpeed = Math.abs(window.pageYOffset - (window.lastScrollY || 0));
+            window.lastScrollY = window.pageYOffset;
+            
+            const spawnChance = 0.4 + (scrollSpeed / 1000);
+            if (Math.random() > (1 - spawnChance)) {
+                createDataPoint();
+            }
+        }, 600);
+
+        // Keyboard interactions for accessibility
+        document.addEventListener('keydown', (e) => {
+            if (e.key === ' ' && e.target === document.body) {
+                e.preventDefault();
+                window.scrollBy(0, window.innerHeight * 0.8);
+            }
+        });
+
+        // Performance optimization
+        const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+        if (prefersReducedMotion.matches) {
+            document.body.classList.add('reduced-motion');
+        }
+    </script>
+</body>
+</html>
