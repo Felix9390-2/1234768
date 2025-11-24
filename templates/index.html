@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simplicity-1A Chat</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            height: 100%;
+            overflow: hidden;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #0a0a0a;
+            color: #ffffff;
+            position: relative;
+        }
+
+        .neural-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .neural-line {
+            position: absolute;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+        }
+
+        .neural-line.h1 {
+            width: 100%;
+            height: 2px;
+            top: 15%;
+            animation: sweep-right 6s ease-in-out infinite;
+        }
+
+        .neural-line.h2 {
+            width: 100%;
+            height: 2px;
+            top: 65%;
+            animation: sweep-left 8s ease-in-out infinite;
+        }
+
+        .neural-line.h3 {
+            width: 100%;
+            height: 1px;
+            top: 40%;
+            animation: sweep-right 10s ease-in-out infinite 2s;
+        }
+
+        .neural-line.v1 {
+            width: 2px;
+            height: 100%;
+            left: 25%;
+            animation: sweep-down 9s ease-in-out infinite;
+        }
+
+        .neural-line.v2 {
+            width: 2px;
+            height: 100%;
+            left: 75%;
+            animation: sweep-up 7s ease-in-out infinite;
+        }
+
+        .neural-line.v3 {
+            width: 1px;
+            height: 100%;
+            left: 50%;
+            animation: sweep-down 11s ease-in-out infinite 3s;
+        }
+
+        @keyframes sweep-right {
+            0% { transform: translateX(-100%); opacity: 0; }
+            15% { opacity: 0.8; }
+            50% { transform: translateX(0); opacity: 0.6; }
+            85% { opacity: 0.8; }
+            100% { transform: translateX(100%); opacity: 0; }
+        }
+
+        @keyframes sweep-left {
+            0% { transform: translateX(100%); opacity: 0; }
+            15% { opacity: 0.7; }
+            50% { transform: translateX(0); opacity: 0.5; }
+            85% { opacity: 0.7; }
+            100% { transform: translateX(-100%); opacity: 0; }
+        }
+
+        @keyframes sweep-down {
+            0% { transform: translateY(-100%); opacity: 0; }
+            15% { opacity: 0.6; }
+            50% { transform: translateY(0); opacity: 0.4; }
+            85% { opacity: 0.6; }
+            100% { transform: translateY(100%); opacity: 0; }
+        }
+
+        @keyframes sweep-up {
+            0% { transform: translateY(100%); opacity: 0; }
+            15% { opacity: 0.8; }
+            50% { transform: translateY(0); opacity: 0.6; }
+            85% { opacity: 0.8; }
+            100% { transform: translateY(-100%); opacity: 0; }
+        }
+
+        .pulse-grid {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+            background-image: 
+                linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+            background-size: 50px 50px;
+            animation: grid-pulse 8s ease-in-out infinite;
+        }
+
+        @keyframes grid-pulse {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 0.6; }
+        }
+
+        .header {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            z-index: 100;
+            background: rgba(10, 10, 10, 0.9);
+        }
+
+        .logo {
+            font-size: 18px;
+            font-weight: 300;
+            letter-spacing: -0.2px;
+            color: #ffffff;
+        }
+
+        .status {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.5);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .chat-container {
+            position: relative;
+            z-index: 2;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            padding-top: 80px;
+        }
+
+        .messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .messages::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .messages::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .messages::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+        }
+
+        .messages::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .message {
+            max-width: 70%;
+            padding: 16px 20px;
+            border-radius: 0;
+            animation: messageSlide 0.3s ease;
+        }
+
+        @keyframes messageSlide {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.user {
+            align-self: flex-end;
+            background: rgba(255, 255, 255, 0.95);
+            color: #0a0a0a;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .message.assistant {
+            align-self: flex-start;
+            background: rgba(20, 20, 20, 0.9);
+            color: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+        }
+
+        .message-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 8px;
+            opacity: 0.6;
+        }
+
+        .message-content {
+            font-size: 15px;
+            line-height: 1.6;
+            font-weight: 300;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .input-container {
+            padding: 30px;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(20px);
+            background: rgba(10, 10, 10, 0.95);
+            z-index: 10;
+        }
+
+        .input-wrapper {
+            max-width: 900px;
+            margin: 0 auto;
+            display: flex;
+            gap: 15px;
+        }
+
+        .input-field {
+            flex: 1;
+            padding: 16px 20px;
+            background: rgba(20, 20, 20, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 0;
+            color: #ffffff;
+            font-size: 15px;
+            font-family: inherit;
+            resize: none;
+            max-height: 150px;
+            transition: all 0.3s ease;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: rgba(255, 255, 255, 0.5);
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
+        }
+
+        .input-field::placeholder {
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        .send-btn {
+            padding: 16px 30px;
+            background: #ffffff;
+            color: #000000;
+            border: none;
+            border-radius: 0;
+            font-size: 14px;
+            font-weight: 400;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .send-btn:hover:not(:disabled) {
+            background: #f0f0f0;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255,255,255,0.15);
+        }
+
+        .send-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .typing-indicator {
+            display: none;
+            align-self: flex-start;
+            padding: 16px 20px;
+            background: rgba(20, 20, 20, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+        }
+
+        .typing-indicator.active {
+            display: block;
+        }
+
+        .typing-dots {
+            display: flex;
+            gap: 6px;
+        }
+
+        .typing-dots span {
+            width: 6px;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+            animation: typing 1.4s infinite;
+        }
+
+        .typing-dots span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-dots span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typing {
+            0%, 60%, 100% {
+                opacity: 0.3;
+                transform: translateY(0);
+            }
+            30% {
+                opacity: 1;
+                transform: translateY(-8px);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                padding: 15px 20px;
+            }
+
+            .logo {
+                font-size: 16px;
+            }
+
+            .status {
+                font-size: 10px;
+            }
+
+            .messages {
+                padding: 20px;
+            }
+
+            .message {
+                max-width: 85%;
+            }
+
+            .input-container {
+                padding: 20px;
+            }
+
+            .input-wrapper {
+                flex-direction: column;
+            }
+
+            .send-btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="neural-bg">
+        <div class="neural-line h1"></div>
+        <div class="neural-line h2"></div>
+        <div class="neural-line h3"></div>
+        <div class="neural-line v1"></div>
+        <div class="neural-line v2"></div>
+        <div class="neural-line v3"></div>
+    </div>
+
+    <div class="pulse-grid"></div>
+
+    <div class="header">
+        <div class="logo">Simplicity-1A</div>
+        <div class="status">Online</div>
+    </div>
+
+    <div class="chat-container">
+        <div class="messages" id="messages">
+            <div class="message assistant">
+                <div class="message-label">Simplicity-1A</div>
+                <div class="message-content">Hello! I'm Simplicity-1A, your AI assistant. How can I help you today?</div>
+            </div>
+        </div>
+
+        <div class="typing-indicator" id="typingIndicator">
+            <div class="typing-dots">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+
+        <div class="input-container">
+            <div class="input-wrapper">
+                <textarea 
+                    class="input-field" 
+                    id="userInput" 
+                    placeholder="Type your message..."
+                    rows="1"
+                ></textarea>
+                <button class="send-btn" id="sendBtn">Send</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const messagesContainer = document.getElementById('messages');
+        const userInput = document.getElementById('userInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const typingIndicator = document.getElementById('typingIndicator');
+
+        let messages = [];
+        let isProcessing = false;
+
+        userInput.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = Math.min(this.scrollHeight, 150) + 'px';
+        });
+
+        userInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        sendBtn.addEventListener('click', sendMessage);
+
+        function addMessage(role, content) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${role}`;
+            
+            const label = document.createElement('div');
+            label.className = 'message-label';
+            label.textContent = role === 'user' ? 'You' : 'Simplicity-1A';
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
+            contentDiv.textContent = content;
+            
+            messageDiv.appendChild(label);
+            messageDiv.appendChild(contentDiv);
+            messagesContainer.appendChild(messageDiv);
+            
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            
+            return contentDiv;
+        }
+
+        async function sendMessage() {
+            if (isProcessing || !userInput.value.trim()) return;
+            
+            const userMessage = userInput.value.trim();
+            userInput.value = '';
+            userInput.style.height = 'auto';
+            
+            addMessage('user', userMessage);
+            messages.push({role: 'user', content: userMessage});
+            
+            isProcessing = true;
+            sendBtn.disabled = true;
+            typingIndicator.classList.add('active');
+            
+            try {
+                const response = await fetch('/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ messages: messages })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let assistantMessage = '';
+                let contentDiv = null;
+                let buffer = '';
+
+                typingIndicator.classList.remove('active');
+
+                while (true) {
+                    const { value, done } = await reader.read();
+                    if (done) break;
+
+                    buffer += decoder.decode(value, { stream: true });
+                    const lines = buffer.split('\n');
+                    
+                    buffer = lines.pop() || '';
+
+                    for (const line of lines) {
+                        if (line.startsWith('data: ')) {
+                            const data = line.slice(6).trim();
+                            if (data === '[DONE]') {
+                                break;
+                            }
+                            
+                            if (data) {
+                                try {
+                                    const parsed = JSON.parse(data);
+                                    if (parsed.content) {
+                                        if (!contentDiv) {
+                                            contentDiv = addMessage('assistant', '');
+                                        }
+                                        assistantMessage += parsed.content;
+                                        contentDiv.textContent = assistantMessage;
+                                        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                                    }
+                                } catch (e) {
+                                    console.error('Parse error:', e, 'Data:', data);
+                                }
+                            }
+                        }
+                    }
+                }
+
+                messages.push({role: 'assistant', content: assistantMessage});
+
+            } catch (error) {
+                console.error('Error:', error);
+                typingIndicator.classList.remove('active');
+                addMessage('assistant', 'Sorry, an error occurred. Please try again.');
+            } finally {
+                isProcessing = false;
+                sendBtn.disabled = false;
+                userInput.focus();
+            }
+        }
+    </script>
+</body>
+</html>
