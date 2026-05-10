@@ -59,8 +59,16 @@
         }
         .logo { font-size: 17px; font-weight: 300; letter-spacing: -.2px; }
 
-        /* Model Toggle */
-        .model-toggle {
+        .header-controls {
+            display: flex; align-items: center; gap: 16px;
+        }
+        .reasoning-label {
+            font-size: 10px; color: rgba(255,255,255,.4);
+            text-transform: uppercase; letter-spacing: 2px;
+        }
+
+        /* Toggle Groups */
+        .model-toggle, .reasoning-toggle {
             display: flex; gap: 3px;
             background: rgba(255,255,255,.05);
             padding: 4px;
@@ -365,9 +373,17 @@
 
     <div class="header">
         <div class="logo">Simplicity</div>
-        <div class="model-toggle">
-            <button class="model-btn active" id="btnA1" onclick="setModel('a1')">A1</button>
-            <button class="model-btn" id="btnR1" onclick="setModel('r1')">R1</button>
+        <div class="header-controls">
+            <div class="model-toggle">
+                <button class="model-btn active" id="btnA1" onclick="setModel('a1')">A1</button>
+                <button class="model-btn" id="btnR1" onclick="setModel('r1')">R1</button>
+            </div>
+            <div class="reasoning-label">Reasoning</div>
+            <div class="reasoning-toggle">
+                <button class="model-btn" id="reasonLow" onclick="setReasoning('low')">Low</button>
+                <button class="model-btn active" id="reasonMed" onclick="setReasoning('medium')">Med</button>
+                <button class="model-btn" id="reasonHigh" onclick="setReasoning('high')">High</button>
+            </div>
         </div>
         <div class="status" id="statusText">Online</div>
     </div>
@@ -402,12 +418,20 @@
         let currentModel  = 'a1';
         let currentTasks  = [];
         let currentTaskCard = null;
+        let currentReasoning = 'medium';
 
         // ── Model toggle ──────────────────────────────────────────────
         function setModel(model) {
             currentModel = model;
             document.getElementById('btnA1').classList.toggle('active', model === 'a1');
             document.getElementById('btnR1').classList.toggle('active', model === 'r1');
+        }
+
+        function setReasoning(level) {
+            currentReasoning = level;
+            document.getElementById('reasonLow').classList.toggle('active', level === 'low');
+            document.getElementById('reasonMed').classList.toggle('active', level === 'medium');
+            document.getElementById('reasonHigh').classList.toggle('active', level === 'high');
         }
 
         // ── Auto-resize textarea ──────────────────────────────────────
@@ -439,12 +463,13 @@
                 // Planning phase
                 const planEl = addPlanningIndicator();
                 let planData = { isHeavy: false };
+                const reasoning = currentReasoning;
 
                 try {
                     const res = await fetch('/plan', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ message: text })
+                        body: JSON.stringify({ message: text, reasoning })
                     });
                     planData = await res.json();
                 } catch (e) {
@@ -468,19 +493,22 @@
             await executeChat(messages, null, currentModel);
         }
 
-        // ── Task card ─────────────────────────────────────────────────
+        let currentCardId = null;
+
         function showTaskCard(title, tasks) {
+            const cardId = Date.now();
+            currentCardId = cardId;
             const card = document.createElement('div');
             card.className = 'task-card';
 
             card.innerHTML = `
                 <div class="task-card-header">
                     <div class="task-card-label">R1 · Task Plan</div>
-                    <div class="task-card-title">${escapeHtml(title)}</div>
+                    <div class="task-card-title">${escapeHtml(title || 'Execute Task')}</div>
                 </div>
-                <div class="task-steps" id="taskSteps">
+                <div class="task-steps" id="taskSteps-${cardId}">
                     ${tasks.map(t => `
-                        <div class="task-step" id="step-${t.id}">
+                        <div class="task-step" id="step-${cardId}-${t.id}">
                             <div class="step-indicator">${t.id}</div>
                             <div class="step-text">
                                 <div class="step-title">${escapeHtml(t.title)}</div>
@@ -489,9 +517,9 @@
                         </div>
                     `).join('')}
                 </div>
-                <div class="task-card-footer" id="taskFooter">
-                    <button class="task-confirm-btn" onclick="confirmTask()">Confirm & Run</button>
-                    <button class="task-cancel-btn" onclick="cancelTask()">Cancel</button>
+                <div class="task-card-footer" id="taskFooter-${cardId}">
+                    <button class="task-confirm-btn" onclick="confirmTask(${cardId})">Confirm & Run</button>
+                    <button class="task-cancel-btn" onclick="cancelTask(${cardId})">Cancel</button>
                 </div>
             `;
 
@@ -500,14 +528,14 @@
             currentTaskCard = card;
         }
 
-        async function confirmTask() {
+        async function confirmTask(cardId) {
             if (!currentTasks.length) return;
 
-            const footer = document.getElementById('taskFooter');
+            const footer = document.getElementById(`taskFooter-${cardId}`);
             if (footer) footer.innerHTML = '<div class="task-status-text">Executing...</div>';
 
             // Mark step 1 as running
-            const firstStep = document.getElementById('step-1');
+            const firstStep = document.getElementById(`step-${cardId}-1`);
             if (firstStep) {
                 firstStep.classList.add('running');
                 firstStep.querySelector('.step-indicator').textContent = '›';
@@ -520,10 +548,11 @@
             await executeChat(messages, currentTasks, 'r1');
         }
 
-        function cancelTask() {
+        function cancelTask(cardId) {
             if (currentTaskCard) { currentTaskCard.remove(); currentTaskCard = null; }
             currentTasks = [];
             messages.pop(); // remove user message we pushed
+            currentCardId = null;
             setStatus('Online');
         }
 
@@ -533,6 +562,9 @@
 
             try {
                 const body = { messages: msgs, model };
+                if (model === 'r1') {
+                    body.reasoning = currentReasoning;
+                }
                 if (tasks && tasks.length) body.tasks = tasks;
 
                 const resp = await fetch('/chat', {
@@ -640,7 +672,7 @@
                 // Mark any remaining steps complete
                 if (currentTaskCard && tasks) {
                     tasks.forEach(t => completeStep(t.id));
-                    const footer = document.getElementById('taskFooter');
+                    const footer = document.getElementById(`taskFooter-${currentCardId}`);
                     if (footer) footer.innerHTML = '<div class="task-status-text">✓ Complete</div>';
                 }
 
@@ -660,7 +692,8 @@
 
         // ── Step tracking ─────────────────────────────────────────────
         function completeStep(n) {
-            const stepEl = document.getElementById(`step-${n}`);
+            if (!currentCardId) return;
+            const stepEl = document.getElementById(`step-${currentCardId}-${n}`);
             if (!stepEl || stepEl.classList.contains('completed')) return;
 
             stepEl.classList.remove('running');
@@ -669,7 +702,7 @@
             if (ind) ind.textContent = '✓';
 
             // Mark next step as running
-            const next = document.getElementById(`step-${n + 1}`);
+            const next = document.getElementById(`step-${currentCardId}-${n + 1}`);
             if (next && !next.classList.contains('completed')) {
                 next.classList.add('running');
                 const nInd = next.querySelector('.step-indicator');
