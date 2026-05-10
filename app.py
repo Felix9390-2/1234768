@@ -1,1491 +1,295 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simplicity Chat</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        html, body { height: 100%; overflow: hidden; }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: #0a0a0a;
-            color: #ffffff;
-        }
-
-        /* ── Neural BG ── */
-        .neural-bg {
-            position: fixed; top: 0; left: 0;
-            width: 100%; height: 100%;
-            pointer-events: none; z-index: 1;
-        }
-        .neural-line {
-            position: absolute;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
-            box-shadow: 0 0 10px rgba(255,255,255,0.1);
-        }
-        .neural-line.h1 { width:100%; height:2px; top:15%; animation: sweep-right 6s ease-in-out infinite; }
-        .neural-line.h2 { width:100%; height:2px; top:65%; animation: sweep-left 8s ease-in-out infinite; }
-        .neural-line.h3 { width:100%; height:1px; top:40%; animation: sweep-right 10s ease-in-out infinite 2s; }
-        .neural-line.v1 { width:2px; height:100%; left:25%; animation: sweep-down 9s ease-in-out infinite; }
-        .neural-line.v2 { width:2px; height:100%; left:75%; animation: sweep-up 7s ease-in-out infinite; }
-        .neural-line.v3 { width:1px; height:100%; left:50%; animation: sweep-down 11s ease-in-out infinite 3s; }
-        @keyframes sweep-right { 0%{transform:translateX(-100%);opacity:0} 15%{opacity:.8} 50%{transform:translateX(0);opacity:.6} 85%{opacity:.8} 100%{transform:translateX(100%);opacity:0} }
-        @keyframes sweep-left  { 0%{transform:translateX(100%);opacity:0} 15%{opacity:.7} 50%{transform:translateX(0);opacity:.5} 85%{opacity:.7} 100%{transform:translateX(-100%);opacity:0} }
-        @keyframes sweep-down  { 0%{transform:translateY(-100%);opacity:0} 15%{opacity:.6} 50%{transform:translateY(0);opacity:.4} 85%{opacity:.6} 100%{transform:translateY(100%);opacity:0} }
-        @keyframes sweep-up    { 0%{transform:translateY(100%);opacity:0} 15%{opacity:.8} 50%{transform:translateY(0);opacity:.6} 85%{opacity:.8} 100%{transform:translateY(-100%);opacity:0} }
-
-        .pulse-grid {
-            position: fixed; top:0; left:0; width:100%; height:100%;
-            pointer-events: none; z-index: 1;
-            background-image:
-                linear-gradient(rgba(255,255,255,.02) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(255,255,255,.02) 1px, transparent 1px);
-            background-size: 50px 50px;
-            animation: grid-pulse 8s ease-in-out infinite;
-        }
-        @keyframes grid-pulse { 0%,100%{opacity:.3} 50%{opacity:.6} }
-
-        /* ── Header ── */
-        .header {
-            position: fixed; top: 0; width: 100%;
-            padding: 16px 32px;
-            display: flex; justify-content: space-between; align-items: center;
-            backdrop-filter: blur(20px);
-            border-bottom: 1px solid rgba(255,255,255,.08);
-            z-index: 100;
-            background: rgba(10,10,10,.9);
-        }
-        .logo { font-size: 17px; font-weight: 300; letter-spacing: -.2px; }
-
-        /* Model Toggle */
-        .control-group {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-        }
-        .model-toggle {
-            display: flex; gap: 3px;
-            background: rgba(255,255,255,.05);
-            padding: 4px;
-            border: 1px solid rgba(255,255,255,.1);
-        }
-        .model-btn {
-            padding: 6px 18px;
-            background: transparent;
-            border: none;
-            color: rgba(255,255,255,.45);
-            font-size: 11px; font-weight: 500;
-            text-transform: uppercase; letter-spacing: 2px;
-            cursor: pointer;
-            transition: all .2s;
-            font-family: inherit;
-        }
-        .model-btn.active { background: #fff; color: #000; }
-        .model-btn:hover:not(.active) { color: rgba(255,255,255,.75); }
-
-        .reasoning-group {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .control-label {
-            font-size: 10px;
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            color: rgba(255,255,255,.45);
-        }
-        .reasoning-toggle {
-            display: flex; gap: 3px;
-            background: rgba(255,255,255,.05);
-            padding: 4px;
-            border: 1px solid rgba(255,255,255,.1);
-        }
-        .reasoning-btn {
-            padding: 6px 12px;
-            background: transparent;
-            border: none;
-            color: rgba(255,255,255,.45);
-            font-size: 10px; font-weight: 500;
-            text-transform: uppercase; letter-spacing: 1.5px;
-            cursor: pointer;
-            transition: all .2s;
-            font-family: inherit;
-        }
-        .reasoning-btn.active { background: #fff; color: #000; }
-        .reasoning-btn:hover:not(.active) { color: rgba(255,255,255,.75); }
-        .reasoning-toggle.disabled { opacity: .4; pointer-events: none; }
-
-        .status { font-size: 11px; color: rgba(255,255,255,.4); text-transform: uppercase; letter-spacing: 2px; }
-
-        /* ── Layout ── */
-        .main-layout {
-            position: relative; z-index: 2;
-            height: 100%;
-            padding-top: 72px;
-            display: grid;
-            grid-template-columns: 1fr 0;
-            transition: grid-template-columns .3s ease;
-        }
-        .main-layout.visual-open {
-            grid-template-columns: 1fr minmax(320px, 36%);
-        }
-        .chat-container {
-            position: relative;
-            height: 100%;
-            display: flex; flex-direction: column;
-            min-width: 0;
-        }
-        .messages {
-            flex: 1; overflow-y: auto;
-            min-height: 0;
-            padding: 28px 32px;
-            display: flex; flex-direction: column; gap: 18px;
-        }
-        .messages::-webkit-scrollbar { width: 6px; }
-        .messages::-webkit-scrollbar-track { background: rgba(255,255,255,.04); }
-        .messages::-webkit-scrollbar-thumb { background: rgba(255,255,255,.18); border-radius: 3px; }
-
-        /* ── Messages ── */
-        .message {
-            max-width: 72%;
-            padding: 15px 18px;
-            animation: msgSlide .25s ease;
-        }
-        @keyframes msgSlide { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
-
-        .message.user {
-            align-self: flex-end;
-            background: rgba(255,255,255,.95);
-            color: #0a0a0a;
-            border: 1px solid rgba(255,255,255,.3);
-        }
-        .message.assistant {
-            align-self: flex-start;
-            background: rgba(18,18,18,.9);
-            color: #fff;
-            border: 1px solid rgba(255,255,255,.08);
-            backdrop-filter: blur(20px);
-        }
-        .message-label {
-            font-size: 10px; text-transform: uppercase;
-            letter-spacing: 1.5px; margin-bottom: 8px; opacity: .55;
-            display: flex; align-items: center; gap: 8px;
-        }
-        .message-content {
-            font-size: 14.5px; line-height: 1.65;
-            font-weight: 300; white-space: pre-wrap; word-wrap: break-word;
-        }
-
-        /* R1 badge */
-        .r1-badge {
-            display: inline-block; padding: 1px 7px;
-            background: rgba(255,255,255,.07);
-            border: 1px solid rgba(255,255,255,.18);
-            font-size: 9px; letter-spacing: 1.5px;
-            color: rgba(255,255,255,.5);
-            border-radius: 0;
-        }
-
-        /* ── Reasoning block ── */
-        .reasoning-block {
-            margin-bottom: 10px;
-            border: 1px solid rgba(255,255,255,.07);
-            overflow: hidden;
-        }
-        .reasoning-header {
-            padding: 7px 12px;
-            background: rgba(255,255,255,.03);
-            font-size: 10px; color: rgba(255,255,255,.38);
-            text-transform: uppercase; letter-spacing: 1.5px;
-            cursor: pointer;
-            display: flex; align-items: center; gap: 7px;
-            user-select: none; transition: background .2s;
-        }
-        .reasoning-header:hover { background: rgba(255,255,255,.06); color: rgba(255,255,255,.55); }
-        .reasoning-toggle { margin-left: auto; font-size: 9px; }
-        .reasoning-dot {
-            width: 5px; height: 5px; border-radius: 50%;
-            background: rgba(255,255,255,.3);
-            animation: pulse-dot 1.2s ease-in-out infinite;
-        }
-        .reasoning-dot.done { animation: none; background: rgba(255,255,255,.2); }
-        @keyframes pulse-dot { 0%,100%{opacity:.3} 50%{opacity:1} }
-        .reasoning-content {
-            display: none;
-            padding: 11px 12px;
-            font-size: 11.5px; color: rgba(255,255,255,.32);
-            line-height: 1.75; font-weight: 300; font-style: italic;
-            white-space: pre-wrap;
-            max-height: 180px; overflow-y: auto;
-            border-top: 1px solid rgba(255,255,255,.06);
-        }
-        .reasoning-content.open { display: block; }
-
-        /* ── Planning indicator ── */
-        .planning-indicator {
-            align-self: flex-start;
-            padding: 12px 16px;
-            background: rgba(18,18,18,.9);
-            border: 1px solid rgba(255,255,255,.08);
-            display: flex; align-items: center; gap: 10px;
-            font-size: 11px; color: rgba(255,255,255,.45);
-            text-transform: uppercase; letter-spacing: 1.5px;
-            animation: msgSlide .2s ease;
-        }
-        .planning-spinner {
-            width: 13px; height: 13px;
-            border: 1px solid rgba(255,255,255,.18);
-            border-top-color: rgba(255,255,255,.7);
-            border-radius: 50%;
-            animation: spin .75s linear infinite;
-        }
-        @keyframes spin { to{transform:rotate(360deg)} }
-
-        /* ── Task Card ── */
-        .task-card {
-            align-self: flex-start;
-            max-width: 82%;
-            background: rgba(13,13,13,.97);
-            border: 1px solid rgba(255,255,255,.13);
-            backdrop-filter: blur(20px);
-            animation: msgSlide .3s ease;
-            overflow: hidden;
-        }
-        .task-card-header {
-            padding: 14px 18px 0;
-            display: flex; flex-direction: column; gap: 5px;
-        }
-        .task-card-label {
-            font-size: 10px; text-transform: uppercase;
-            letter-spacing: 2px; color: rgba(255,255,255,.38);
-        }
-        .task-card-title {
-            font-size: 14px; font-weight: 400; color: rgba(255,255,255,.9);
-        }
-        .task-steps {
-            padding: 14px 18px;
-            display: flex; flex-direction: column; gap: 8px;
-        }
-        .task-step {
-            display: flex; align-items: flex-start; gap: 11px;
-            padding: 11px 12px;
-            background: rgba(255,255,255,.025);
-            border: 1px solid rgba(255,255,255,.05);
-            transition: all .35s ease;
-        }
-        .task-step.completed {
-            background: rgba(255,255,255,.055);
-            border-color: rgba(255,255,255,.12);
-        }
-        .task-step.running {
-            border-color: rgba(255,255,255,.2);
-        }
-        .step-indicator {
-            width: 20px; height: 20px; flex-shrink: 0;
-            border: 1px solid rgba(255,255,255,.25);
-            display: flex; align-items: center; justify-content: center;
-            font-size: 9px; color: rgba(255,255,255,.38);
-            margin-top: 1px; transition: all .3s;
-            font-weight: 500;
-        }
-        .task-step.completed .step-indicator {
-            background: #fff; border-color: #fff; color: #000;
-        }
-        .task-step.running .step-indicator {
-            border-color: rgba(255,255,255,.65);
-            color: rgba(255,255,255,.8);
-            animation: pulse-border 1s ease-in-out infinite;
-        }
-        @keyframes pulse-border { 0%,100%{opacity:.5} 50%{opacity:1} }
-        .step-text { flex: 1; }
-        .step-title {
-            font-size: 12.5px; color: rgba(255,255,255,.8);
-            margin-bottom: 2px; transition: color .3s;
-        }
-        .task-step.completed .step-title { color: rgba(255,255,255,.55); }
-        .step-desc { font-size: 11px; color: rgba(255,255,255,.35); font-weight: 300; }
-
-        .task-card-footer {
-            padding: 0 18px 16px;
-            display: flex; align-items: center; gap: 10px;
-        }
-        .task-confirm-btn {
-            padding: 9px 22px;
-            background: #fff; color: #000;
-            border: none; cursor: pointer;
-            font-size: 11px; font-weight: 500;
-            text-transform: uppercase; letter-spacing: 1px;
-            font-family: inherit;
-            transition: all .2s;
-        }
-        .task-confirm-btn:hover { background: #e8e8e8; }
-        .task-cancel-btn {
-            padding: 9px 22px;
-            background: transparent; color: rgba(255,255,255,.45);
-            border: 1px solid rgba(255,255,255,.18); cursor: pointer;
-            font-size: 11px; font-weight: 500;
-            text-transform: uppercase; letter-spacing: 1px;
-            font-family: inherit;
-            transition: all .2s;
-        }
-        .task-cancel-btn:hover { border-color: rgba(255,255,255,.4); color: rgba(255,255,255,.75); }
-        .task-status-text {
-            font-size: 11px; color: rgba(255,255,255,.4);
-            text-transform: uppercase; letter-spacing: 1.5px;
-        }
-
-        /* ── Input ── */
-        .input-container {
-            padding: 24px 32px;
-            border-top: 1px solid rgba(255,255,255,.07);
-            backdrop-filter: blur(20px);
-            background: rgba(10,10,10,.97);
-            z-index: 10;
-        }
-        .input-wrapper {
-            max-width: 860px; margin: 0 auto;
-            display: flex; gap: 12px;
-        }
-        .input-field {
-            flex: 1; padding: 14px 18px;
-            background: rgba(18,18,18,.9);
-            border: 1px solid rgba(255,255,255,.18);
-            color: #fff;
-            font-size: 14px; font-family: inherit;
-            resize: none; max-height: 150px;
-            transition: border-color .25s, box-shadow .25s;
-        }
-        .input-field:focus { outline: none; border-color: rgba(255,255,255,.45); box-shadow: 0 0 18px rgba(255,255,255,.07); }
-        .input-field::placeholder { color: rgba(255,255,255,.35); }
-        .send-btn {
-            padding: 14px 28px;
-            background: #fff; color: #000;
-            border: none; cursor: pointer;
-            font-size: 12px; font-weight: 400;
-            text-transform: uppercase; letter-spacing: 1px;
-            font-family: inherit;
-            transition: all .25s; white-space: nowrap;
-        }
-        .send-btn:hover:not(:disabled) { background: #ebebeb; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(255,255,255,.12); }
-        .send-btn:disabled { opacity: .45; cursor: not-allowed; transform: none; }
-
-        /* ── Visual Pane ── */
-        .visual-pane {
-            --visual-bg: #0c0c0c;
-            --visual-surface: rgba(16,16,16,.92);
-            --visual-stroke: rgba(255,255,255,.68);
-            --visual-muted: rgba(255,255,255,.4);
-            --visual-accent: #9ff3ff;
-            --visual-text: #f3f3f3;
-
-            background: var(--visual-bg);
-            border-left: 1px solid rgba(255,255,255,.08);
-            display: flex; flex-direction: column;
-            opacity: 0;
-            pointer-events: none;
-            transform: translateX(10px);
-            transition: opacity .25s ease, transform .25s ease;
-        }
-        .visual-pane.light {
-            --visual-bg: #f6f4ef;
-            --visual-surface: #ffffff;
-            --visual-stroke: #151515;
-            --visual-muted: #3b3b3b;
-            --visual-accent: #1a4fff;
-            --visual-text: #111111;
-        }
-        .main-layout.visual-open .visual-pane {
-            opacity: 1;
-            pointer-events: auto;
-            transform: translateX(0);
-        }
-        .visual-header {
-            display: flex; align-items: center; gap: 10px;
-            padding: 16px 18px;
-            border-bottom: 1px solid rgba(255,255,255,.08);
-            background: var(--visual-surface);
-            backdrop-filter: blur(16px);
-        }
-        .visual-title {
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            color: var(--visual-muted);
-        }
-        .visual-mode-badge {
-            padding: 3px 8px;
-            border: 1px solid rgba(255,255,255,.18);
-            font-size: 9px;
-            text-transform: uppercase;
-            letter-spacing: 1.4px;
-            color: var(--visual-text);
-        }
-        .visual-actions {
-            margin-left: auto;
-            display: flex; gap: 8px;
-        }
-        .visual-action-btn {
-            padding: 6px 10px;
-            background: transparent;
-            border: 1px solid rgba(255,255,255,.18);
-            color: var(--visual-text);
-            font-size: 10px;
-            letter-spacing: 1.2px;
-            text-transform: uppercase;
-            cursor: pointer;
-            font-family: inherit;
-        }
-        .visual-action-btn:hover { border-color: rgba(255,255,255,.4); }
-        .visual-body {
-            flex: 1;
-            display: flex; flex-direction: column;
-            padding: 16px 18px;
-            gap: 12px;
-            overflow: hidden;
-        }
-        .visual-canvas-wrap {
-            flex: 1;
-            border: 1px solid rgba(255,255,255,.1);
-            background:
-                radial-gradient(circle at 20% 20%, rgba(255,255,255,.06), transparent 45%),
-                linear-gradient(rgba(255,255,255,.06) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(255,255,255,.06) 1px, transparent 1px);
-            background-size: 100% 100%, 20px 20px, 20px 20px;
-            position: relative;
-        }
-        .visual-pane.light .visual-canvas-wrap {
-            background:
-                radial-gradient(circle at 20% 20%, rgba(0,0,0,.06), transparent 45%),
-                linear-gradient(rgba(0,0,0,.07) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(0,0,0,.07) 1px, transparent 1px);
-        }
-        .visual-canvas {
-            width: 100%; height: 100%;
-        }
-        .visual-empty {
-            font-size: 11px;
-            color: var(--visual-muted);
-            letter-spacing: 1.2px;
-            text-transform: uppercase;
-        }
-        .visual-footer {
-            padding: 12px 18px 16px;
-            font-size: 10px;
-            color: var(--visual-muted);
-            text-transform: uppercase;
-            letter-spacing: 1.2px;
-            border-top: 1px solid rgba(255,255,255,.08);
-            background: var(--visual-surface);
-        }
-        .visual-pane svg text {
-            fill: var(--visual-text);
-            font-size: 3.2px;
-            letter-spacing: .2px;
-            font-weight: 400;
-        }
-        .visual-pane svg .v-title { font-size: 4.6px; font-weight: 600; }
-        .visual-pane svg .v-muted { fill: var(--visual-muted); }
-        .visual-pane svg .v-shape {
-            stroke: var(--visual-stroke);
-            stroke-width: .7;
-            fill: none;
-            vector-effect: non-scaling-stroke;
-        }
-        .visual-pane svg .v-fill {
-            fill: rgba(255,255,255,.08);
-            stroke: var(--visual-stroke);
-            stroke-width: .7;
-            vector-effect: non-scaling-stroke;
-        }
-        .visual-pane.light svg .v-fill { fill: rgba(0,0,0,.06); }
-        .visual-pane svg .v-dash { stroke-dasharray: 2 2; }
-
-        .visual-toggle-btn {
-            padding: 6px 14px;
-            background: transparent;
-            border: 1px solid rgba(255,255,255,.18);
-            color: rgba(255,255,255,.6);
-            font-size: 10px;
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            cursor: pointer;
-            font-family: inherit;
-            transition: all .2s;
-        }
-        .visual-toggle-btn.active {
-            background: #fff; color: #000; border-color: #fff;
-        }
-        .visual-toggle-btn:hover:not(.active) { color: rgba(255,255,255,.85); }
-
-        /* ── Typing indicator ── */
-        .typing-indicator {
-            display: none; align-self: flex-start;
-            padding: 14px 18px;
-            background: rgba(18,18,18,.9);
-            border: 1px solid rgba(255,255,255,.08);
-        }
-        .typing-indicator.active { display: block; }
-        .typing-dots { display: flex; gap: 5px; }
-        .typing-dots span {
-            width: 5px; height: 5px;
-            background: rgba(255,255,255,.45); border-radius: 50%;
-            animation: typing 1.4s infinite;
-        }
-        .typing-dots span:nth-child(2) { animation-delay: .2s; }
-        .typing-dots span:nth-child(3) { animation-delay: .4s; }
-        @keyframes typing { 0%,60%,100%{opacity:.3;transform:translateY(0)} 30%{opacity:1;transform:translateY(-6px)} }
-
-        /* ── Mobile ── */
-        @media (max-width: 768px) {
-            .header { padding: 13px 18px; }
-            .messages { padding: 18px; }
-            .message { max-width: 88%; }
-            .input-container { padding: 16px 18px; }
-            .input-wrapper { flex-direction: column; }
-            .send-btn { width: 100%; }
-            .task-card { max-width: 95%; }
-        }
-        @media (max-width: 980px) {
-            .main-layout { grid-template-columns: 1fr; }
-            .main-layout.visual-open { grid-template-columns: 1fr; }
-            .visual-pane {
-                position: fixed; right: 0; top: 72px; bottom: 0;
-                width: 86%; max-width: 420px;
-                transform: translateX(100%);
-                z-index: 120;
-                box-shadow: -18px 0 40px rgba(0,0,0,.45);
-            }
-            .main-layout.visual-open .visual-pane { transform: translateX(0); }
-        }
-    </style>
-</head>
-<body>
-    <div class="neural-bg">
-        <div class="neural-line h1"></div>
-        <div class="neural-line h2"></div>
-        <div class="neural-line h3"></div>
-        <div class="neural-line v1"></div>
-        <div class="neural-line v2"></div>
-        <div class="neural-line v3"></div>
-    </div>
-    <div class="pulse-grid"></div>
-
-    <div class="header">
-        <div class="logo">Simplicity</div>
-        <div class="control-group">
-            <div class="model-toggle">
-                <button class="model-btn active" id="btnA1" onclick="setModel('a1')">A1</button>
-                <button class="model-btn" id="btnR1" onclick="setModel('r1')">R1</button>
-            </div>
-            <div class="reasoning-group">
-                <div class="control-label">Reasoning</div>
-                <div class="reasoning-toggle" id="reasoningToggle">
-                    <button class="reasoning-btn" id="btnReasonLow" onclick="setReasoning('low')">Low</button>
-                    <button class="reasoning-btn active" id="btnReasonMed" onclick="setReasoning('medium')">Med</button>
-                    <button class="reasoning-btn" id="btnReasonHigh" onclick="setReasoning('high')">High</button>
-                </div>
-            </div>
-            <button class="visual-toggle-btn" id="visualToggleBtn" onclick="toggleVisualPane()">Visual Off</button>
-        </div>
-        <div class="status" id="statusText">Online</div>
-    </div>
-
-    <div class="main-layout" id="mainLayout">
-        <div class="chat-container">
-            <div class="messages" id="messages">
-                <div class="message assistant">
-                    <div class="message-label">Simplicity-1A</div>
-                    <div class="message-content">Hello! I'm Simplicity-1A. How can I help?</div>
-                </div>
-            </div>
-            <div class="typing-indicator" id="typingIndicator">
-                <div class="typing-dots"><span></span><span></span><span></span></div>
-            </div>
-            <div class="input-container">
-                <div class="input-wrapper">
-                    <textarea class="input-field" id="userInput" placeholder="Type your message..." rows="1"></textarea>
-                    <button class="send-btn" id="sendBtn">Send</button>
-                </div>
-            </div>
-        </div>
-
-        <aside class="visual-pane" id="visualPane">
-            <div class="visual-header">
-                <div class="visual-title">Visual Pane</div>
-                <div class="visual-mode-badge" id="visualModeBadge">General Mode</div>
-                <div class="visual-actions">
-                    <button class="visual-action-btn" id="visualCloseBtn">Close</button>
-                </div>
-            </div>
-            <div class="visual-body">
-                <div class="visual-canvas-wrap">
-                    <svg class="visual-canvas" id="visualCanvas" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet"></svg>
-                </div>
-                <div class="visual-empty" id="visualEmpty">Visuals will appear here</div>
-            </div>
-            <div class="visual-footer">Auto: study, diagrams, long essays</div>
-        </aside>
-    </div>
-
-    <script>
-        const messagesEl   = document.getElementById('messages');
-        const userInput    = document.getElementById('userInput');
-        const sendBtn      = document.getElementById('sendBtn');
-        const typingEl     = document.getElementById('typingIndicator');
-        const statusEl     = document.getElementById('statusText');
-        const reasoningToggle = document.getElementById('reasoningToggle');
-        const reasonButtons = {
-            low: document.getElementById('btnReasonLow'),
-            medium: document.getElementById('btnReasonMed'),
-            high: document.getElementById('btnReasonHigh')
-        };
-        const mainLayout   = document.getElementById('mainLayout');
-        const visualPane   = document.getElementById('visualPane');
-        const visualToggleBtn = document.getElementById('visualToggleBtn');
-        const visualModeBadge = document.getElementById('visualModeBadge');
-        const visualCloseBtn = document.getElementById('visualCloseBtn');
-        const visualCanvas = document.getElementById('visualCanvas');
-        const visualEmpty  = document.getElementById('visualEmpty');
-
-        let messages      = [];
-        let isProcessing  = false;
-        let currentModel  = 'a1';
-        let currentTasks  = [];
-        let currentTaskCard = null;
-        let reasoningLevel = 'medium';
-        let visualPaneOpen = false;
-        let pendingVisualIntent = null;
-        let lastVisualMode = 'general';
-
-        // ── Model toggle ──────────────────────────────────────────────
-        function setModel(model) {
-            currentModel = model;
-            document.getElementById('btnA1').classList.toggle('active', model === 'a1');
-            document.getElementById('btnR1').classList.toggle('active', model === 'r1');
-            if (reasoningToggle) {
-                reasoningToggle.classList.toggle('disabled', model !== 'r1');
-            }
-        }
-
-        function setReasoning(level) {
-            reasoningLevel = level;
-            Object.keys(reasonButtons).forEach((key) => {
-                reasonButtons[key].classList.toggle('active', key === level);
-            });
-        }
-
-        // ── Visual pane + intent ────────────────────────────────────
-        const VISUAL_DSL_PROMPT = [
-            'You can add a hidden visual script for the side pane.',
-            'Output format:',
-            '1) Normal response text for the user.',
-            '2) A visual block wrapped EXACTLY like:',
-            '[[VISUAL]]',
-            '...commands...',
-            '[[/VISUAL]]',
-            'The visual block must contain ONLY DSL commands, no prose.',
-            'Use a 0-100 coordinate grid.',
-            'Commands: RECT x y w h "label"; CIRCLE x y r "label"; LINE x1 y1 x2 y2 "label"; ARROW x1 y1 x2 y2 "label"; TEXT x y "content"; TITLE x y "content"; GROUP x y w h "label"; CONNECT x1 y1 x2 y2 "label"; ANGLE x y degrees "label"; STEP x y "text"; FLOW x1 y1 x2 y2; IMG x y w h "label"; HIGHLIGHT x y w h "label"; CLEAR; MODE <study|diagram|flow|essay|general>; THEME <light|dark>; FOCUS x y.',
-            'If no visual is needed, still include the block but leave it empty.',
-            'Prefer diagrams for study, math, geometry, algebra, research, and long essays.'
-        ].join('\n');
-
-        const VISUAL_MODE_LABELS = {
-            study: 'Study Mode',
-            essay: 'Essay Mode',
-            diagram: 'Diagram Mode',
-            flow: 'Flow Mode',
-            general: 'General Mode'
-        };
-
-        function toggleVisualPane(force) {
-            const next = typeof force === 'boolean' ? force : !visualPaneOpen;
-            setVisualPane(next);
-        }
-
-        function setVisualPane(open) {
-            visualPaneOpen = open;
-            if (mainLayout) mainLayout.classList.toggle('visual-open', open);
-            if (visualToggleBtn) {
-                visualToggleBtn.classList.toggle('active', open);
-                visualToggleBtn.textContent = open ? 'Visual On' : 'Visual Off';
-            }
-        }
-
-        function setVisualMode(mode) {
-            const safeMode = (mode || 'general').toLowerCase();
-            lastVisualMode = safeMode;
-            if (visualModeBadge) {
-                visualModeBadge.textContent = VISUAL_MODE_LABELS[safeMode] || 'Visual Mode';
-            }
-        }
-
-        function setVisualTheme(theme) {
-            if (!visualPane) return;
-            const t = (theme || '').toLowerCase();
-            visualPane.classList.toggle('light', t === 'light');
-        }
-
-        function getVisualIntent(text) {
-            const t = text.toLowerCase();
-            const isStudy = /\b(study|studying|learn|learning|revise|revision|homework|exam|math|maths|algebra|geometry|calculus|theorem|proof|research|diagram|visualize|visualisation|visualization|visulization)\b/.test(t);
-            const isVisual = /\b(diagram|visual|flow|flowchart|chart|timeline|process|architecture|map)\b/.test(t);
-            const isEssay = text.trim().length >= 420 || text.trim().split(/\s+/).length >= 80;
-            const mode = isStudy ? 'study' : (isEssay ? 'essay' : (isVisual ? 'diagram' : 'general'));
-            return { enabled: isStudy || isVisual || isEssay, mode };
-        }
-
-        function buildVisualPrompt(mode) {
-            const m = (mode || 'general').toLowerCase();
-            return `${VISUAL_DSL_PROMPT}\nCurrent intent: ${m}.`;
-        }
-
-        if (visualCloseBtn) {
-            visualCloseBtn.addEventListener('click', () => setVisualPane(false));
-        }
-
-        // ── Auto-resize textarea ──────────────────────────────────────
-        userInput.addEventListener('input', function () {
-            this.style.height = 'auto';
-            this.style.height = Math.min(this.scrollHeight, 150) + 'px';
-        });
-        userInput.addEventListener('keydown', function (e) {
-            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
-        });
-        sendBtn.addEventListener('click', sendMessage);
-
-        // ── Send message ──────────────────────────────────────────────
-        async function sendMessage() {
-            if (isProcessing || !userInput.value.trim()) return;
-
-            const text = userInput.value.trim();
-            const visualIntent = getVisualIntent(text);
-            pendingVisualIntent = visualIntent;
-            if (visualIntent.enabled) {
-                setVisualMode(visualIntent.mode);
-                setVisualPane(true);
-            }
-            userInput.value = '';
-            userInput.style.height = 'auto';
-
-            addMessage('user', text);
-            messages.push({ role: 'user', content: text });
-
-            isProcessing = true;
-            sendBtn.disabled = true;
-            setStatus('Thinking...');
-
-            if (currentModel === 'r1') {
-                // Planning phase
-                const planEl = addPlanningIndicator();
-                let planData = { isHeavy: false };
-
-                try {
-                    const res = await fetch('/plan', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ message: text })
-                    });
-                    planData = await res.json();
-                } catch (e) {
-                    console.error('Plan error:', e);
-                }
-
-                planEl.remove();
-
-                if (planData.isHeavy && planData.tasks && planData.tasks.length > 0) {
-                    // Show task card — pause and wait for user confirmation
-                    currentTasks = planData.tasks;
-                    showTaskCard(planData.taskTitle, planData.tasks);
-                    isProcessing = false;
-                    sendBtn.disabled = false;
-                    setStatus('Awaiting confirmation');
-                    return;
-                }
-            }
-
-            setStatus('Generating...');
-            await executeChat(messages, null, currentModel, pendingVisualIntent);
-        }
-
-        // ── Task card ─────────────────────────────────────────────────
-        function showTaskCard(title, tasks) {
-            const card = document.createElement('div');
-            card.className = 'task-card';
-
-            card.innerHTML = `
-                <div class="task-card-header">
-                    <div class="task-card-label">R1 · Task Plan</div>
-                    <div class="task-card-title">${escapeHtml(title)}</div>
-                </div>
-                <div class="task-steps" id="taskSteps">
-                    ${tasks.map(t => `
-                        <div class="task-step" id="step-${t.id}">
-                            <div class="step-indicator">${t.id}</div>
-                            <div class="step-text">
-                                <div class="step-title">${escapeHtml(t.title)}</div>
-                                <div class="step-desc">${escapeHtml(t.description)}</div>
-                            </div>
-                        </div>
-                    `).join('')}
-                </div>
-                <div class="task-card-footer" id="taskFooter">
-                    <button class="task-confirm-btn" onclick="confirmTask()">Confirm & Run</button>
-                    <button class="task-cancel-btn" onclick="cancelTask()">Cancel</button>
-                </div>
-            `;
-
-            messagesEl.appendChild(card);
-            messagesEl.scrollTop = messagesEl.scrollHeight;
-            currentTaskCard = card;
-        }
-
-        async function confirmTask() {
-            if (!currentTasks.length) return;
-
-            const footer = document.getElementById('taskFooter');
-            if (footer) footer.innerHTML = '<div class="task-status-text">Executing...</div>';
-
-            // Mark step 1 as running
-            const firstStep = document.getElementById('step-1');
-            if (firstStep) {
-                firstStep.classList.add('running');
-                firstStep.querySelector('.step-indicator').textContent = '›';
-            }
-
-            isProcessing = true;
-            sendBtn.disabled = true;
-            setStatus('Executing task...');
-
-            await executeChat(messages, currentTasks, 'r1', pendingVisualIntent);
-        }
-
-        function cancelTask() {
-            if (currentTaskCard) { currentTaskCard.remove(); currentTaskCard = null; }
-            currentTasks = [];
-            messages.pop(); // remove user message we pushed
-            pendingVisualIntent = null;
-            setStatus('Online');
-        }
-
-        // ── Core chat executor ────────────────────────────────────────
-        async function executeChat(msgs, tasks, model, visualIntent) {
-            typingEl.classList.add('active');
-
-            try {
-                const shouldUseVisual = visualPaneOpen || (visualIntent && visualIntent.enabled);
-                const payloadMessages = Array.isArray(msgs) ? msgs.slice() : [];
-                if (shouldUseVisual) {
-                    const mode = visualIntent && visualIntent.mode ? visualIntent.mode : lastVisualMode;
-                    payloadMessages.unshift({ role: 'system', content: buildVisualPrompt(mode) });
-                }
-
-                const body = { messages: payloadMessages, model };
-                if (model === 'r1') body.reasoning = reasoningLevel;
-                if (tasks && tasks.length) body.tasks = tasks;
-
-                const resp = await fetch('/chat', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(body)
-                });
-
-                if (!resp.ok) {
-                    let errText = '';
-                    try { errText = await resp.text(); } catch (e) { errText = ''; }
-                    let detail = '';
-                    try {
-                        const parsed = JSON.parse(errText);
-                        if (parsed && parsed.error) detail = parsed.error;
-                    } catch (e) {
-                        detail = '';
-                    }
-                    const message = detail || errText || `HTTP ${resp.status}`;
-                    throw new Error(message);
-                }
-                if (!resp.body) {
-                    throw new Error('No response body. Streaming may be blocked in this browser.');
-                }
-
-                const reader  = resp.body.getReader();
-                const decoder = new TextDecoder();
-
-                let assistantText = '';
-                let reasoningText = '';
-                let visualText    = '';
-                const visualParser = createVisualStreamParser();
-                let contentDiv    = null;
-                let reasoningDiv  = null;
-                let reasoningDot  = null;
-                let msgWrapper    = null;
-                let buffer        = '';
-                let markerCarry   = '';
-                const markerPrefix = '§STEP_DONE:';
-
-                const shouldStripMarkers = Boolean(tasks && tasks.length);
-                const stripStepMarkers = (text) => {
-                    if (!shouldStripMarkers) return text;
-                    const combined = markerCarry + text;
-                    markerCarry = '';
-
-                    const markerRegex = /§STEP_DONE:(\d+)§(?:\r?\n)?/g;
-                    let out = '';
-                    let lastIndex = 0;
-                    let match;
-
-                    while ((match = markerRegex.exec(combined)) !== null) {
-                        out += combined.slice(lastIndex, match.index);
-                        completeStep(parseInt(match[1], 10));
-                        lastIndex = markerRegex.lastIndex;
-                    }
-
-                    let tail = combined.slice(lastIndex);
-                    const lastMarker = tail.lastIndexOf('§');
-                    if (lastMarker !== -1) {
-                        const fragment = tail.slice(lastMarker);
-                        if (markerPrefix.startsWith(fragment) ||
-                            (fragment.startsWith(markerPrefix) && /^§STEP_DONE:\d*$/.test(fragment))) {
-                            markerCarry = fragment;
-                            tail = tail.slice(0, lastMarker);
-                        }
-                    }
-
-                    return out + tail;
-                };
-
-                if (model === 'r1') {
-                    msgWrapper   = createR1Wrapper();
-                    reasoningDiv = msgWrapper.querySelector('.reasoning-content');
-                    reasoningDot = msgWrapper.querySelector('.reasoning-dot');
-                    contentDiv   = msgWrapper.querySelector('.message-content');
-                } else {
-                    contentDiv = addMessage('assistant', '');
-                }
-
-                typingEl.classList.remove('active');
-
-                while (true) {
-                    const { value, done } = await reader.read();
-                    if (done) break;
-
-                    buffer += decoder.decode(value, { stream: true });
-                    const lines = buffer.split('\n');
-                    buffer = lines.pop() || '';
-
-                    for (const line of lines) {
-                        if (!line.startsWith('data: ')) continue;
-                        const raw = line.slice(6).trim();
-                        if (raw === '[DONE]') break;
-                        if (!raw) continue;
-
-                        let parsed;
-                        try { parsed = JSON.parse(raw); } catch (e) { continue; }
-
-                        // ── Reasoning ──
-                        if (parsed.type === 'reasoning' && parsed.content) {
-                            reasoningText += parsed.content;
-
-                            const rBlock = msgWrapper ? msgWrapper.querySelector('.reasoning-block') : null;
-                            if (rBlock) rBlock.style.display = 'block';
-                            if (reasoningDiv) {
-                                reasoningDiv.textContent = reasoningText;
-                                reasoningDiv.scrollTop = reasoningDiv.scrollHeight;
-                            }
-                        }
-
-                        // ── Main content ──
-                        if (parsed.type === 'content' && parsed.content) {
-                            let chunk = parsed.content;
-
-                            // Strip step markers without leaking partial fragments
-                            chunk = stripStepMarkers(chunk);
-
-                            const split = visualParser.consume(chunk);
-                            assistantText += split.text;
-                            visualText += split.visual;
-
-                            if (contentDiv) {
-                                contentDiv.textContent = assistantText;
-                            }
-                            messagesEl.scrollTop = messagesEl.scrollHeight;
-                        }
-
-                        if (parsed.type === 'error') {
-                            if (!contentDiv) contentDiv = addMessage('assistant', '');
-                            contentDiv.textContent = 'Error: ' + parsed.content;
-                        }
-                    }
-                }
-
-                // Flush any pending visual parser data
-                const tail = visualParser.flush();
-                if (tail.text) assistantText += tail.text;
-                if (tail.visual) visualText += tail.visual;
-                if (contentDiv) contentDiv.textContent = assistantText.trim();
-
-                // Reasoning done — stop pulsing dot
-                if (reasoningDot) reasoningDot.classList.add('done');
-
-                messages.push({ role: 'assistant', content: assistantText.trim() });
-
-                if (visualText.trim()) {
-                    renderVisual(visualText, visualIntent);
-                } else if (visualPaneOpen || (visualIntent && visualIntent.enabled)) {
-                    renderVisual('', visualIntent);
-                }
-
-                // Mark any remaining steps complete
-                if (currentTaskCard && tasks) {
-                    tasks.forEach(t => completeStep(t.id));
-                    const footer = document.getElementById('taskFooter');
-                    if (footer) footer.innerHTML = '<div class="task-status-text">✓ Complete</div>';
-                }
-
-            } catch (err) {
-                console.error(err);
-                typingEl.classList.remove('active');
-                let errMsg = (err && err.message) ? err.message : 'An error occurred. Please try again.';
-                if (/Failed to fetch/i.test(errMsg)) {
-                    errMsg = 'Network error. Make sure the server is running and you opened http://127.0.0.1:5000/';
-                } else if (/GROQ_API_KEY/i.test(errMsg)) {
-                    errMsg = 'Missing GROQ_API_KEY. Set it in your environment and restart the server.';
-                }
-                addMessage('assistant', 'Error: ' + errMsg);
-            } finally {
-                isProcessing    = false;
-                sendBtn.disabled = false;
-                currentTaskCard = null;
-                currentTasks    = [];
-                pendingVisualIntent = null;
-                setStatus('Online');
-                userInput.focus();
-            }
-        }
-
-        // ── Step tracking ─────────────────────────────────────────────
-        function completeStep(n) {
-            const stepEl = document.getElementById(`step-${n}`);
-            if (!stepEl || stepEl.classList.contains('completed')) return;
-
-            stepEl.classList.remove('running');
-            stepEl.classList.add('completed');
-            const ind = stepEl.querySelector('.step-indicator');
-            if (ind) ind.textContent = '✓';
-
-            // Mark next step as running
-            const next = document.getElementById(`step-${n + 1}`);
-            if (next && !next.classList.contains('completed')) {
-                next.classList.add('running');
-                const nInd = next.querySelector('.step-indicator');
-                if (nInd) { nInd.textContent = '›'; nInd.classList.add('running'); }
-            }
-        }
-
-        // ── DOM helpers ───────────────────────────────────────────────
-        function createR1Wrapper() {
-            const wrapper = document.createElement('div');
-            wrapper.className = 'message assistant';
-
-            const label = document.createElement('div');
-            label.className = 'message-label';
-            label.innerHTML = 'Simplicity-R1 <span class="r1-badge">R1</span>';
-
-            const rBlock = document.createElement('div');
-            rBlock.className = 'reasoning-block';
-            rBlock.style.display = 'none';
-            rBlock.innerHTML = `
-                <div class="reasoning-header">
-                    <div class="reasoning-dot"></div>
-                    <span>Thinking</span>
-                    <span class="reasoning-toggle">▼</span>
-                </div>
-                <div class="reasoning-content"></div>
-            `;
-            rBlock.querySelector('.reasoning-header').addEventListener('click', function () {
-                const c = this.nextElementSibling;
-                const t = this.querySelector('.reasoning-toggle');
-                c.classList.toggle('open');
-                t.textContent = c.classList.contains('open') ? '▲' : '▼';
-            });
-
-            const content = document.createElement('div');
-            content.className = 'message-content';
-
-            wrapper.appendChild(label);
-            wrapper.appendChild(rBlock);
-            wrapper.appendChild(content);
-            messagesEl.appendChild(wrapper);
-            messagesEl.scrollTop = messagesEl.scrollHeight;
-
-            return wrapper;
-        }
-
-        function addMessage(role, content) {
-            const div = document.createElement('div');
-            div.className = `message ${role}`;
-
-            const label = document.createElement('div');
-            label.className = 'message-label';
-            label.textContent = role === 'user' ? 'You' : 'Simplicity-1A';
-
-            const contentDiv = document.createElement('div');
-            contentDiv.className = 'message-content';
-            contentDiv.textContent = content;
-
-            div.appendChild(label);
-            div.appendChild(contentDiv);
-            messagesEl.appendChild(div);
-            messagesEl.scrollTop = messagesEl.scrollHeight;
-
-            return contentDiv;
-        }
-
-        function addPlanningIndicator() {
-            const div = document.createElement('div');
-            div.className = 'planning-indicator';
-            div.innerHTML = '<div class="planning-spinner"></div><span>Planning task...</span>';
-            messagesEl.appendChild(div);
-            messagesEl.scrollTop = messagesEl.scrollHeight;
-            return div;
-        }
-
-        function setStatus(text) { statusEl.textContent = text; }
-
-        function escapeHtml(str) {
-            return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-        }
-
-        // ── Visual streaming parser ─────────────────────────────────
-        function createVisualStreamParser() {
-            const startTag = '[[VISUAL]]';
-            const endTag = '[[/VISUAL]]';
-            let mode = 'text';
-            let carry = '';
-
-            function findPartialTag(data, tag) {
-                const max = Math.min(tag.length - 1, data.length);
-                for (let i = max; i > 0; i--) {
-                    if (tag.startsWith(data.slice(-i))) return i;
-                }
-                return 0;
-            }
-
-            function consume(chunk) {
-                let data = carry + chunk;
-                carry = '';
-                let textOut = '';
-                let visualOut = '';
-
-                while (data.length) {
-                    if (mode === 'text') {
-                        const idx = data.indexOf(startTag);
-                        if (idx === -1) {
-                            const keep = findPartialTag(data, startTag);
-                            if (keep) {
-                                textOut += data.slice(0, -keep);
-                                carry = data.slice(-keep);
-                            } else {
-                                textOut += data;
-                            }
-                            data = '';
-                        } else {
-                            textOut += data.slice(0, idx);
-                            data = data.slice(idx + startTag.length);
-                            mode = 'visual';
-                        }
-                    } else {
-                        const idx = data.indexOf(endTag);
-                        if (idx === -1) {
-                            const keep = findPartialTag(data, endTag);
-                            if (keep) {
-                                visualOut += data.slice(0, -keep);
-                                carry = data.slice(-keep);
-                            } else {
-                                visualOut += data;
-                            }
-                            data = '';
-                        } else {
-                            visualOut += data.slice(0, idx);
-                            data = data.slice(idx + endTag.length);
-                            mode = 'text';
-                        }
-                    }
-                }
-
-                return { text: textOut, visual: visualOut };
-            }
-
-            function flush() {
-                const out = { text: '', visual: '' };
-                if (!carry) return out;
-                if (mode === 'text') out.text = carry; else out.visual = carry;
-                carry = '';
-                return out;
-            }
-
-            return { consume, flush };
-        }
-
-        // ── Visual renderer ─────────────────────────────────────────
-        const SVG_NS = 'http://www.w3.org/2000/svg';
-
-        function svgEl(tag, attrs) {
-            const el = document.createElementNS(SVG_NS, tag);
-            Object.keys(attrs || {}).forEach((key) => el.setAttribute(key, attrs[key]));
-            return el;
-        }
-
-        function tokenize(line) {
-            const tokens = [];
-            let current = '';
-            let inQuotes = false;
-            for (let i = 0; i < line.length; i++) {
-                const ch = line[i];
-                if (ch === '"') {
-                    inQuotes = !inQuotes;
-                    if (!inQuotes) {
-                        tokens.push(current);
-                        current = '';
-                    }
-                    continue;
-                }
-                if (!inQuotes && /\s/.test(ch)) {
-                    if (current) { tokens.push(current); current = ''; }
-                    continue;
-                }
-                current += ch;
-            }
-            if (current) tokens.push(current);
-            return tokens;
-        }
-
-        function toNum(val, fallback = 0) {
-            const n = parseFloat(val);
-            return Number.isFinite(n) ? n : fallback;
-        }
-
-        function getLabel(tokens, start) {
-            const label = tokens.slice(start).join(' ').trim();
-            return label;
-        }
-
-        function addSvgText(svg, x, y, text, className, anchor = 'middle') {
-            if (!text) return;
-            const t = svgEl('text', {
-                x: x,
-                y: y,
-                'text-anchor': anchor,
-                'dominant-baseline': 'middle',
-                class: className || ''
-            });
-            t.textContent = text;
-            svg.appendChild(t);
-        }
-
-        function renderVisual(script, intent) {
-            if (!visualCanvas) return;
-            visualCanvas.innerHTML = '';
-
-            if (!script || !script.trim()) {
-                if (visualEmpty) visualEmpty.style.display = 'block';
-                return;
-            }
-            if (visualEmpty) visualEmpty.style.display = 'none';
-
-            const meta = { mode: null, theme: null };
-            const defs = svgEl('defs', {});
-            const marker = svgEl('marker', {
-                id: 'visual-arrow',
-                markerWidth: '6',
-                markerHeight: '6',
-                refX: '5.4',
-                refY: '3',
-                orient: 'auto'
-            });
-            const mPath = svgEl('path', { d: 'M0,0 L6,3 L0,6 Z', fill: 'var(--visual-stroke)' });
-            marker.appendChild(mPath);
-            defs.appendChild(marker);
-            visualCanvas.appendChild(defs);
-
-            const lines = script.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
-            lines.forEach((line) => {
-                if (line.startsWith('#') || line.startsWith('//')) return;
-
-                const tokens = tokenize(line);
-                if (!tokens.length) return;
-
-                const cmd = tokens[0].toUpperCase();
-
-                if (cmd === 'MODE') {
-                    meta.mode = tokens[1] ? tokens[1].toLowerCase() : null;
-                    return;
-                }
-                if (cmd === 'THEME') {
-                    meta.theme = tokens[1] ? tokens[1].toLowerCase() : null;
-                    return;
-                }
-                if (cmd === 'CLEAR') {
-                    visualCanvas.innerHTML = '';
-                    visualCanvas.appendChild(defs);
-                    return;
-                }
-
-                if (cmd === 'RECT') {
-                    const x = toNum(tokens[1]);
-                    const y = toNum(tokens[2]);
-                    const w = toNum(tokens[3]);
-                    const h = toNum(tokens[4]);
-                    const label = getLabel(tokens, 5);
-                    const rect = svgEl('rect', { x, y, width: w, height: h, rx: 1.4, class: 'v-fill' });
-                    visualCanvas.appendChild(rect);
-                    addSvgText(visualCanvas, x + w / 2, y + h / 2, label, '');
-                    return;
-                }
-
-                if (cmd === 'CIRCLE') {
-                    const cx = toNum(tokens[1]);
-                    const cy = toNum(tokens[2]);
-                    const r = toNum(tokens[3]);
-                    const label = getLabel(tokens, 4);
-                    const circle = svgEl('circle', { cx, cy, r, class: 'v-fill' });
-                    visualCanvas.appendChild(circle);
-                    addSvgText(visualCanvas, cx, cy, label, '');
-                    return;
-                }
-
-                if (cmd === 'LINE' || cmd === 'CONNECT') {
-                    const x1 = toNum(tokens[1]);
-                    const y1 = toNum(tokens[2]);
-                    const x2 = toNum(tokens[3]);
-                    const y2 = toNum(tokens[4]);
-                    const label = getLabel(tokens, 5);
-                    const lineClass = cmd === 'CONNECT' ? 'v-shape v-dash' : 'v-shape';
-                    const line = svgEl('line', { x1, y1, x2, y2, class: lineClass });
-                    visualCanvas.appendChild(line);
-                    addSvgText(visualCanvas, (x1 + x2) / 2, (y1 + y2) / 2 - 1.2, label, 'v-muted');
-                    return;
-                }
-
-                if (cmd === 'ARROW' || cmd === 'FLOW') {
-                    const x1 = toNum(tokens[1]);
-                    const y1 = toNum(tokens[2]);
-                    const x2 = toNum(tokens[3]);
-                    const y2 = toNum(tokens[4]);
-                    const label = getLabel(tokens, 5);
-                    const line = svgEl('line', {
-                        x1, y1, x2, y2,
-                        class: 'v-shape',
-                        'marker-end': 'url(#visual-arrow)'
-                    });
-                    visualCanvas.appendChild(line);
-                    addSvgText(visualCanvas, (x1 + x2) / 2, (y1 + y2) / 2 - 1.4, label, 'v-muted');
-                    return;
-                }
-
-                if (cmd === 'TEXT') {
-                    const x = toNum(tokens[1]);
-                    const y = toNum(tokens[2]);
-                    const label = getLabel(tokens, 3);
-                    addSvgText(visualCanvas, x, y, label, '', 'middle');
-                    return;
-                }
-
-                if (cmd === 'TITLE') {
-                    const x = toNum(tokens[1]);
-                    const y = toNum(tokens[2]);
-                    const label = getLabel(tokens, 3);
-                    addSvgText(visualCanvas, x, y, label, 'v-title', 'middle');
-                    return;
-                }
-
-                if (cmd === 'GROUP' || cmd === 'HIGHLIGHT') {
-                    const x = toNum(tokens[1]);
-                    const y = toNum(tokens[2]);
-                    const w = toNum(tokens[3]);
-                    const h = toNum(tokens[4]);
-                    const label = getLabel(tokens, 5);
-                    const rect = svgEl('rect', { x, y, width: w, height: h, rx: 1.2, class: 'v-shape v-dash' });
-                    if (cmd === 'HIGHLIGHT') rect.setAttribute('class', 'v-fill v-dash');
-                    visualCanvas.appendChild(rect);
-                    addSvgText(visualCanvas, x + 2, y + 2, label, 'v-muted', 'start');
-                    return;
-                }
-
-                if (cmd === 'STEP') {
-                    const x = toNum(tokens[1]);
-                    const y = toNum(tokens[2]);
-                    const label = getLabel(tokens, 3);
-                    const w = 26;
-                    const h = 10;
-                    const rect = svgEl('rect', { x, y, width: w, height: h, rx: 1.4, class: 'v-fill' });
-                    visualCanvas.appendChild(rect);
-                    addSvgText(visualCanvas, x + w / 2, y + h / 2, label, '');
-                    return;
-                }
-
-                if (cmd === 'IMG') {
-                    const x = toNum(tokens[1]);
-                    const y = toNum(tokens[2]);
-                    const w = toNum(tokens[3]);
-                    const h = toNum(tokens[4]);
-                    const label = getLabel(tokens, 5);
-                    const rect = svgEl('rect', { x, y, width: w, height: h, rx: 1.2, class: 'v-shape v-dash' });
-                    const d1 = svgEl('line', { x1: x, y1: y, x2: x + w, y2: y + h, class: 'v-shape v-dash' });
-                    const d2 = svgEl('line', { x1: x + w, y1: y, x2: x, y2: y + h, class: 'v-shape v-dash' });
-                    visualCanvas.appendChild(rect);
-                    visualCanvas.appendChild(d1);
-                    visualCanvas.appendChild(d2);
-                    addSvgText(visualCanvas, x + w / 2, y + h + 3, label, 'v-muted');
-                    return;
-                }
-
-                if (cmd === 'ANGLE') {
-                    const x = toNum(tokens[1]);
-                    const y = toNum(tokens[2]);
-                    const deg = Math.max(0, Math.min(180, toNum(tokens[3], 45)));
-                    const label = getLabel(tokens, 4);
-                    const r = 7;
-                    const rad = (deg * Math.PI) / 180;
-                    const x2 = x + r;
-                    const y2 = y;
-                    const x3 = x + r * Math.cos(rad);
-                    const y3 = y - r * Math.sin(rad);
-                    const line1 = svgEl('line', { x1: x, y1: y, x2: x2, y2: y2, class: 'v-shape' });
-                    const line2 = svgEl('line', { x1: x, y1: y, x2: x3, y2: y3, class: 'v-shape' });
-                    const arc = svgEl('path', {
-                        d: `M ${x2} ${y2} A ${r} ${r} 0 0 0 ${x3} ${y3}`,
-                        class: 'v-shape'
-                    });
-                    visualCanvas.appendChild(line1);
-                    visualCanvas.appendChild(line2);
-                    visualCanvas.appendChild(arc);
-                    addSvgText(visualCanvas, x + r + 2, y - r / 2, label || `${deg}°`, 'v-muted', 'start');
-                    return;
-                }
-
-                if (cmd === 'FOCUS') {
-                    const x = toNum(tokens[1]);
-                    const y = toNum(tokens[2]);
-                    const ring = svgEl('circle', { cx: x, cy: y, r: 3.5, class: 'v-shape' });
-                    const dot = svgEl('circle', { cx: x, cy: y, r: 0.8, class: 'v-fill' });
-                    visualCanvas.appendChild(ring);
-                    visualCanvas.appendChild(dot);
-                    return;
-                }
-            });
-
-            if (meta.theme) setVisualTheme(meta.theme);
-            else setVisualTheme('dark');
-            const mode = meta.mode || (intent && intent.mode) || lastVisualMode;
-            setVisualMode(mode);
-        }
-
-        setReasoning(reasoningLevel);
-        setModel(currentModel);
-        setVisualMode('general');
-        setVisualPane(false);
-    </script>
-</body>
-</html>
+from flask import Flask, request, jsonify, Response, send_from_directory
+from flask_cors import CORS
+from groq import Groq
+import os
+import json
+
+APP_ROOT = os.path.dirname(os.path.abspath(__file__))
+app = Flask(__name__)
+CORS(app)
+
+
+def get_groq_client():
+    api_key = os.environ.get("GROQ_API_KEY")
+    if not api_key:
+        raise RuntimeError("Missing GROQ_API_KEY environment variable")
+    return Groq(api_key=api_key)
+
+A1_MODEL = os.environ.get("A1_MODEL", "llama-3.1-8b-instant")
+R1_MODEL = os.environ.get("R1_MODEL", "openai/gpt-oss-20b")
+_r1_reasoning_env = os.environ.get("R1_SUPPORTS_REASONING_EFFORT", "true").lower()
+R1_SUPPORTS_REASONING = _r1_reasoning_env in ("1", "true", "yes")
+REASONING_TEMPERATURE = {"low": 0.4, "medium": 0.7, "high": 0.9}
+
+MODELS = {
+    "a1": A1_MODEL,
+    "r1": R1_MODEL
+}
+
+SYSTEM_PROMPTS = {
+    "a1": (
+        "You are Simplicity-1A, a helpful AI assistant made by Simplicity. "
+        "short af answers like 240m. Model parameters: 240 million. "
+        "simple ai example: User: Why does the sun rise in the east? "
+        "|AI: Because the Earth rotates. So we see the sun come from that direction | "
+        "simple responses like above. btw i need broken sentences"
+    ),
+    "r1": (
+        "You are Simplicity-R1, 140b params AI an advanced reasoning AI by Simplicity. "
+        "You think deeply and provide thorough, well-structured answers. "
+        "When executing a task plan, you will be given numbered steps. "
+        "After completing each step in your response, emit the exact marker §STEP_DONE:N§ "
+        "(where N is the step number) on its own line immediately after finishing that step. "
+        "These markers are system signals — do not reference or explain them in your text."
+    )
+}
+
+PLANNING_PROMPT = """Analyze this user request and determine if it is a heavy/complex task or a simple query.
+
+SIMPLE (isHeavy: false): greetings, basic questions, simple lookups, casual conversation, single-fact answers, anything trivial.
+HEAVY (isHeavy: true): coding tasks, debugging, multi-step analysis, writing documents, research, system design, data processing, complex explanations with multiple distinct parts, anything requiring sustained effort.
+
+User request: "{message}"
+
+Respond ONLY with valid JSON, no markdown fences, no extra text:
+{{
+  "isHeavy": true,
+  "taskTitle": "Short descriptive title for this task",
+  "tasks": [
+    {{"id": 1, "title": "Step title", "description": "Brief description of what this step does"}},
+    {{"id": 2, "title": "Step title", "description": "Brief description"}},
+    ...
+  ]
+}}
+
+For simple queries respond ONLY with: {{"isHeavy": false, "taskTitle": "", "tasks": []}}
+For heavy tasks generate 3 to 6 concrete, meaningful, sequential steps."""
+
+
+@app.route('/')
+def index():
+    return send_from_directory(APP_ROOT, 'index.html')
+
+
+@app.after_request
+def add_no_cache_headers(response):
+    response.headers['Cache-Control'] = 'no-store'
+    return response
+
+
+@app.route('/plan', methods=['POST'])
+def plan():
+    data = request.json
+    message = data.get('message', '')
+
+    prompt = PLANNING_PROMPT.format(message=message)
+
+    try:
+        client = get_groq_client()
+        kwargs = {
+            "model": MODELS["r1"],
+            "messages": [{"role": "user", "content": prompt}],
+            "temperature": 0.2,
+            "max_completion_tokens": 512,
+            "top_p": 1,
+            "stream": False,
+            "stop": None
+        }
+        if R1_SUPPORTS_REASONING:
+            kwargs["reasoning_effort"] = "low"
+
+        completion = client.chat.completions.create(**kwargs)
+
+        response_text = completion.choices[0].message.content.strip()
+
+        # Strip markdown fences if model added them
+        if "```" in response_text:
+            parts = response_text.split("```")
+            for part in parts:
+                part = part.strip()
+                if part.startswith("json"):
+                    part = part[4:].strip()
+                try:
+                    json.loads(part)
+                    response_text = part
+                    break
+                except Exception:
+                    continue
+
+        plan_data = None
+        try:
+            plan_data = json.loads(response_text)
+        except Exception:
+            start = response_text.find('{')
+            end = response_text.rfind('}')
+            if start != -1 and end != -1 and end > start:
+                candidate = response_text[start:end + 1]
+                plan_data = json.loads(candidate)
+            else:
+                raise
+
+        if not isinstance(plan_data, dict) or 'isHeavy' not in plan_data:
+            raise ValueError('Invalid plan response')
+
+        return jsonify(plan_data)
+
+    except Exception as e:
+        return jsonify({"isHeavy": False, "taskTitle": "", "tasks": [], "error": str(e)})
+
+
+@app.route('/chat', methods=['POST'])
+def chat():
+    data = request.json
+    messages = data.get('messages', [])
+    model_key = data.get('model', 'a1')
+    tasks = data.get('tasks', None)
+    reasoning = data.get('reasoning', 'medium')
+
+    if reasoning not in ('low', 'medium', 'high'):
+        reasoning = 'medium'
+
+    model = MODELS.get(model_key, MODELS['a1'])
+    system_content = SYSTEM_PROMPTS.get(model_key, SYSTEM_PROMPTS['a1'])
+
+    if tasks and model_key == 'r1':
+        task_lines = '\n'.join(
+            [f"{t['id']}. {t['title']}: {t['description']}" for t in tasks]
+        )
+        system_content += (
+            f"\n\nTask plan to execute:\n{task_lines}\n\n"
+            "Work through each step in order. After completing each step, "
+            "emit §STEP_DONE:N§ on its own line."
+        )
+
+    system_message = {"role": "system", "content": system_content}
+    full_messages = [system_message] + messages
+
+    def generate():
+        try:
+            client = get_groq_client()
+        except Exception as e:
+            yield f"data: {json.dumps({'type': 'error', 'content': str(e)})}\n\n"
+            yield "data: [DONE]\n\n"
+            return
+
+        kwargs = {
+            "model": model,
+            "messages": full_messages,
+            "temperature": 1,
+            "max_completion_tokens": 8192 if model_key == 'r1' else 1024,
+            "top_p": 1,
+            "stream": True,
+            "stop": None
+        }
+
+        if model_key == 'r1':
+            kwargs["temperature"] = REASONING_TEMPERATURE.get(reasoning, 0.7)
+            if R1_SUPPORTS_REASONING:
+                kwargs["reasoning_effort"] = reasoning
+
+        try:
+            completion = client.chat.completions.create(**kwargs)
+
+            for chunk in completion:
+                delta = chunk.choices[0].delta
+
+                # Reasoning / thinking tokens
+                reasoning = getattr(delta, 'reasoning_content', None)
+                if reasoning:
+                    yield f"data: {json.dumps({'type': 'reasoning', 'content': reasoning})}\n\n"
+
+                content = delta.content
+                if content:
+                    yield f"data: {json.dumps({'type': 'content', 'content': content})}\n\n"
+
+            yield "data: [DONE]\n\n"
+
+        except Exception as e:
+            yield f"data: {json.dumps({'type': 'error', 'content': str(e)})}\n\n"
+            yield "data: [DONE]\n\n"
+
+    return Response(generate(), mimetype='text/event-stream')
+
+
+@app.route('/api/chat', methods=['POST'])
+def api_chat():
+    auth_header = request.headers.get('Authorization')
+    if auth_header != 'Bearer A4r3av_K8y':
+        return jsonify({"error": "Unauthorized"}), 401
+
+    data = request.json or {}
+    model_key = data.get('model', 'a1')
+    messages = data.get('messages', [])
+    reasoning = data.get('reasoning_effort', 'medium')
+    stream = data.get('stream', False)
+
+    if reasoning not in ('low', 'medium', 'high'):
+        reasoning = 'medium'
+
+    model = MODELS.get(model_key, MODELS['a1'])
+    
+    # Optional: Inject system prompts if not provided, or let user provide them.
+    # To act as a pure bridge, we might just pass the user's messages + system prompt.
+    # We will prepend our system prompt if no system prompt is present.
+    has_system = any(m.get('role') == 'system' for m in messages)
+    full_messages = list(messages)
+    if not has_system:
+        system_content = SYSTEM_PROMPTS.get(model_key, SYSTEM_PROMPTS['a1'])
+        full_messages.insert(0, {"role": "system", "content": system_content})
+
+    try:
+        client = get_groq_client()
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+    kwargs = {
+        "model": model,
+        "messages": full_messages,
+        "temperature": data.get("temperature", 1),
+        "max_completion_tokens": data.get("max_completion_tokens", 8192 if model_key == 'r1' else 1024),
+        "top_p": data.get("top_p", 1),
+        "stream": stream,
+        "stop": None
+    }
+
+    if model_key == 'r1':
+        kwargs["temperature"] = REASONING_TEMPERATURE.get(reasoning, 0.7)
+        if R1_SUPPORTS_REASONING:
+            kwargs["reasoning_effort"] = reasoning
+
+    try:
+        completion = client.chat.completions.create(**kwargs)
+
+        if not stream:
+            content = completion.choices[0].message.content
+            reasoning_content = getattr(completion.choices[0].message, 'reasoning_content', None)
+            return jsonify({
+                "content": content,
+                "reasoning_content": reasoning_content
+            })
+
+        def generate():
+            try:
+                for chunk in completion:
+                    delta = chunk.choices[0].delta
+                    r_content = getattr(delta, 'reasoning_content', None)
+                    if r_content:
+                        yield f"data: {json.dumps({'type': 'reasoning', 'content': r_content})}\n\n"
+                    
+                    c_content = delta.content
+                    if c_content:
+                        yield f"data: {json.dumps({'type': 'content', 'content': c_content})}\n\n"
+                        
+                yield "data: [DONE]\n\n"
+            except Exception as stream_err:
+                yield f"data: {json.dumps({'type': 'error', 'content': str(stream_err)})}\n\n"
+                yield "data: [DONE]\n\n"
+
+        return Response(generate(), mimetype='text/event-stream')
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000, debug=False)
