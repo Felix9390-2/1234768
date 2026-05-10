@@ -201,5 +201,84 @@ def chat():
     return Response(generate(), mimetype='text/event-stream')
 
 
+@app.route('/api/chat', methods=['POST'])
+def api_chat():
+    auth_header = request.headers.get('Authorization')
+    if auth_header != 'Bearer A4r3av_K8y':
+        return jsonify({"error": "Unauthorized"}), 401
+
+    data = request.json or {}
+    model_key = data.get('model', 'a1')
+    messages = data.get('messages', [])
+    reasoning = data.get('reasoning_effort', 'medium')
+    stream = data.get('stream', False)
+
+    if reasoning not in ('low', 'medium', 'high'):
+        reasoning = 'medium'
+
+    model = MODELS.get(model_key, MODELS['a1'])
+    
+    # Optional: Inject system prompts if not provided, or let user provide them.
+    # To act as a pure bridge, we might just pass the user's messages + system prompt.
+    # We will prepend our system prompt if no system prompt is present.
+    has_system = any(m.get('role') == 'system' for m in messages)
+    full_messages = list(messages)
+    if not has_system:
+        system_content = SYSTEM_PROMPTS.get(model_key, SYSTEM_PROMPTS['a1'])
+        full_messages.insert(0, {"role": "system", "content": system_content})
+
+    try:
+        client = get_groq_client()
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+    kwargs = {
+        "model": model,
+        "messages": full_messages,
+        "temperature": data.get("temperature", 1),
+        "max_completion_tokens": data.get("max_completion_tokens", 4096 if model_key == 'r1' else 1024),
+        "top_p": data.get("top_p", 1),
+        "stream": stream,
+        "stop": None
+    }
+
+    if model_key == 'r1':
+        kwargs["reasoning_effort"] = reasoning
+        kwargs["temperature"] = 0.7
+
+    try:
+        completion = client.chat.completions.create(**kwargs)
+
+        if not stream:
+            content = completion.choices[0].message.content
+            reasoning_content = getattr(completion.choices[0].message, 'reasoning_content', None)
+            return jsonify({
+                "content": content,
+                "reasoning_content": reasoning_content
+            })
+
+        def generate():
+            try:
+                for chunk in completion:
+                    delta = chunk.choices[0].delta
+                    r_content = getattr(delta, 'reasoning_content', None)
+                    if r_content:
+                        yield f"data: {json.dumps({'type': 'reasoning', 'content': r_content})}\n\n"
+                    
+                    c_content = delta.content
+                    if c_content:
+                        yield f"data: {json.dumps({'type': 'content', 'content': c_content})}\n\n"
+                        
+                yield "data: [DONE]\n\n"
+            except Exception as stream_err:
+                yield f"data: {json.dumps({'type': 'error', 'content': str(stream_err)})}\n\n"
+                yield "data: [DONE]\n\n"
+
+        return Response(generate(), mimetype='text/event-stream')
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=False)
