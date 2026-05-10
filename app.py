@@ -6,7 +6,9 @@ import json
 
 app = Flask(__name__)
 CORS(app)
-client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
+client = Groq(api_key=os.environ.get("GROQ_API_KEY", "a4r6v_k9y"))
+
+API_BEARER_TOKEN = "a4r9v_k8y"
 
 MODELS = {
     "a1": "llama-3.1-8b-instant",
@@ -99,6 +101,45 @@ def plan():
 
     except Exception as e:
         return jsonify({"isHeavy": False, "taskTitle": "", "tasks": [], "error": str(e)})
+
+
+@app.route('/bridge', methods=['POST'])
+def bridge():
+    auth_header = request.headers.get('Authorization', '')
+    if auth_header != f"Bearer {API_BEARER_TOKEN}":
+        return jsonify({"error": "Unauthorized"}), 401
+
+    data = request.json or {}
+    model_key = data.get('model', 'a1')
+    messages = data.get('messages', [])
+    reasoning_effort = data.get('reasoning', data.get('reasoningEffort', 'medium'))
+
+    model = MODELS.get(model_key, MODELS['a1'])
+    system_content = SYSTEM_PROMPTS.get(model_key, SYSTEM_PROMPTS['a1'])
+    full_messages = [{"role": "system", "content": system_content}] + messages
+
+    kwargs = {
+        "model": model,
+        "messages": full_messages,
+        "top_p": data.get("top_p", 1),
+        "stream": False,
+        "stop": None
+    }
+
+    if model_key == 'r1':
+        kwargs["reasoning_effort"] = reasoning_effort
+        kwargs["temperature"] = data.get("temperature", 0.7)
+        kwargs["max_completion_tokens"] = data.get("max_completion_tokens", 4096)
+    else:
+        kwargs["temperature"] = data.get("temperature", 1)
+        kwargs["max_completion_tokens"] = data.get("max_completion_tokens", 1024)
+
+    try:
+        completion = client.chat.completions.create(**kwargs)
+        content = completion.choices[0].message.content
+        return jsonify({"model": model_key, "content": content})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 @app.route('/chat', methods=['POST'])
