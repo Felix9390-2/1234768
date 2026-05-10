@@ -1,12 +1,19 @@
-from flask import Flask, render_template, request, jsonify, Response
+from flask import Flask, request, jsonify, Response, send_from_directory
 from flask_cors import CORS
 from groq import Groq
 import os
 import json
 
+APP_ROOT = os.path.dirname(os.path.abspath(__file__))
 app = Flask(__name__)
 CORS(app)
-client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
+
+
+def get_groq_client():
+    api_key = os.environ.get("GROQ_API_KEY")
+    if not api_key:
+        raise RuntimeError("Missing GROQ_API_KEY environment variable")
+    return Groq(api_key=api_key)
 
 MODELS = {
     "a1": "llama-3.1-8b-instant",
@@ -22,7 +29,7 @@ SYSTEM_PROMPTS = {
         "simple responses like above. btw i need broken sentences"
     ),
     "r1": (
-        "You are Simplicity-R1, an advanced reasoning AI by Simplicity. "
+        "You are Simplicity-R1, 140b params AI an advanced reasoning AI by Simplicity. "
         "You think deeply and provide thorough, well-structured answers. "
         "When executing a task plan, you will be given numbered steps. "
         "After completing each step in your response, emit the exact marker §STEP_DONE:N§ "
@@ -55,7 +62,13 @@ For heavy tasks generate 3 to 6 concrete, meaningful, sequential steps."""
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    return send_from_directory(APP_ROOT, 'index.html')
+
+
+@app.after_request
+def add_no_cache_headers(response):
+    response.headers['Cache-Control'] = 'no-store'
+    return response
 
 
 @app.route('/plan', methods=['POST'])
@@ -66,6 +79,7 @@ def plan():
     prompt = PLANNING_PROMPT.format(message=message)
 
     try:
+        client = get_groq_client()
         completion = client.chat.completions.create(
             model=MODELS["r1"],
             messages=[{"role": "user", "content": prompt}],
@@ -93,7 +107,21 @@ def plan():
                 except Exception:
                     continue
 
-        plan_data = json.loads(response_text)
+        plan_data = None
+        try:
+            plan_data = json.loads(response_text)
+        except Exception:
+            start = response_text.find('{')
+            end = response_text.rfind('}')
+            if start != -1 and end != -1 and end > start:
+                candidate = response_text[start:end + 1]
+                plan_data = json.loads(candidate)
+            else:
+                raise
+
+        if not isinstance(plan_data, dict) or 'isHeavy' not in plan_data:
+            raise ValueError('Invalid plan response')
+
         return jsonify(plan_data)
 
     except Exception as e:
@@ -106,6 +134,10 @@ def chat():
     messages = data.get('messages', [])
     model_key = data.get('model', 'a1')
     tasks = data.get('tasks', None)
+    reasoning = data.get('reasoning', 'medium')
+
+    if reasoning not in ('low', 'medium', 'high'):
+        reasoning = 'medium'
 
     model = MODELS.get(model_key, MODELS['a1'])
     system_content = SYSTEM_PROMPTS.get(model_key, SYSTEM_PROMPTS['a1'])
@@ -124,6 +156,13 @@ def chat():
     full_messages = [system_message] + messages
 
     def generate():
+        try:
+            client = get_groq_client()
+        except Exception as e:
+            yield f"data: {json.dumps({'type': 'error', 'content': str(e)})}\n\n"
+            yield "data: [DONE]\n\n"
+            return
+
         kwargs = {
             "model": model,
             "messages": full_messages,
@@ -135,7 +174,7 @@ def chat():
         }
 
         if model_key == 'r1':
-            kwargs["reasoning_effort"] = "medium"
+            kwargs["reasoning_effort"] = reasoning
             kwargs["temperature"] = 0.7
 
         try:
