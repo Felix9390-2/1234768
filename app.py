@@ -29,7 +29,7 @@ SYSTEM_PROMPTS = {
         "When executing a task plan, you will be given numbered steps. "
         "After completing each step in your response, emit the exact marker §STEP_DONE:N§ "
         "(where N is the step number) on its own line immediately after finishing that step. "
-        "These markers are system signals — do not reference or explain them in your text."
+        "These markers are system signals — do not reference or explain them in your text.YOU ARE NOT MADE BY OPENAI OR EVEN RELATED BY THEM YOU ARE MADE BY THE COMPANY CALLED SIMPLICITY INC by Ishaan Niranjan"
     )
 }
 
