@@ -60,11 +60,6 @@
         .logo { font-size: 17px; font-weight: 300; letter-spacing: -.2px; }
 
         /* Model Toggle */
-        .control-group {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-        }
         .model-toggle {
             display: flex; gap: 3px;
             background: rgba(255,255,255,.05);
@@ -84,38 +79,6 @@
         }
         .model-btn.active { background: #fff; color: #000; }
         .model-btn:hover:not(.active) { color: rgba(255,255,255,.75); }
-
-        .reasoning-group {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .control-label {
-            font-size: 10px;
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            color: rgba(255,255,255,.45);
-        }
-        .reasoning-toggle {
-            display: flex; gap: 3px;
-            background: rgba(255,255,255,.05);
-            padding: 4px;
-            border: 1px solid rgba(255,255,255,.1);
-        }
-        .reasoning-btn {
-            padding: 6px 12px;
-            background: transparent;
-            border: none;
-            color: rgba(255,255,255,.45);
-            font-size: 10px; font-weight: 500;
-            text-transform: uppercase; letter-spacing: 1.5px;
-            cursor: pointer;
-            transition: all .2s;
-            font-family: inherit;
-        }
-        .reasoning-btn.active { background: #fff; color: #000; }
-        .reasoning-btn:hover:not(.active) { color: rgba(255,255,255,.75); }
-        .reasoning-toggle.disabled { opacity: .4; pointer-events: none; }
 
         .status { font-size: 11px; color: rgba(255,255,255,.4); text-transform: uppercase; letter-spacing: 2px; }
 
@@ -402,19 +365,9 @@
 
     <div class="header">
         <div class="logo">Simplicity</div>
-        <div class="control-group">
-            <div class="model-toggle">
-                <button class="model-btn active" id="btnA1" onclick="setModel('a1')">A1</button>
-                <button class="model-btn" id="btnR1" onclick="setModel('r1')">R1</button>
-            </div>
-            <div class="reasoning-group">
-                <div class="control-label">Reasoning</div>
-                <div class="reasoning-toggle" id="reasoningToggle">
-                    <button class="reasoning-btn" id="btnReasonLow" onclick="setReasoning('low')">Low</button>
-                    <button class="reasoning-btn active" id="btnReasonMed" onclick="setReasoning('medium')">Med</button>
-                    <button class="reasoning-btn" id="btnReasonHigh" onclick="setReasoning('high')">High</button>
-                </div>
-            </div>
+        <div class="model-toggle">
+            <button class="model-btn active" id="btnA1" onclick="setModel('a1')">A1</button>
+            <button class="model-btn" id="btnR1" onclick="setModel('r1')">R1</button>
         </div>
         <div class="status" id="statusText">Online</div>
     </div>
@@ -443,35 +396,18 @@
         const sendBtn      = document.getElementById('sendBtn');
         const typingEl     = document.getElementById('typingIndicator');
         const statusEl     = document.getElementById('statusText');
-        const reasoningToggle = document.getElementById('reasoningToggle');
-        const reasonButtons = {
-            low: document.getElementById('btnReasonLow'),
-            medium: document.getElementById('btnReasonMed'),
-            high: document.getElementById('btnReasonHigh')
-        };
 
         let messages      = [];
         let isProcessing  = false;
         let currentModel  = 'a1';
         let currentTasks  = [];
         let currentTaskCard = null;
-        let reasoningLevel = 'medium';
 
         // ── Model toggle ──────────────────────────────────────────────
         function setModel(model) {
             currentModel = model;
             document.getElementById('btnA1').classList.toggle('active', model === 'a1');
             document.getElementById('btnR1').classList.toggle('active', model === 'r1');
-            if (reasoningToggle) {
-                reasoningToggle.classList.toggle('disabled', model !== 'r1');
-            }
-        }
-
-        function setReasoning(level) {
-            reasoningLevel = level;
-            Object.keys(reasonButtons).forEach((key) => {
-                reasonButtons[key].classList.toggle('active', key === level);
-            });
         }
 
         // ── Auto-resize textarea ──────────────────────────────────────
@@ -597,7 +533,6 @@
 
             try {
                 const body = { messages: msgs, model };
-                if (model === 'r1') body.reasoning = reasoningLevel;
                 if (tasks && tasks.length) body.tasks = tasks;
 
                 const resp = await fetch('/chat', {
@@ -618,46 +553,7 @@
                 let reasoningDot  = null;
                 let msgWrapper    = null;
                 let buffer        = '';
-                let markerCarry   = '';
-                const markerPrefix = '§STEP_DONE:';
-
-                const stripStepMarkers = (text) => {
-                    const combined = markerCarry + text;
-                    markerCarry = '';
-
-                    const markerRegex = /§STEP_DONE:(\d+)§(?:\r?\n)?/g;
-                    let out = '';
-                    let lastIndex = 0;
-                    let match;
-
-                    while ((match = markerRegex.exec(combined)) !== null) {
-                        out += combined.slice(lastIndex, match.index);
-                        completeStep(parseInt(match[1], 10));
-                        lastIndex = markerRegex.lastIndex;
-                    }
-
-                    let tail = combined.slice(lastIndex);
-                    const lastMarker = tail.lastIndexOf('§');
-                    if (lastMarker !== -1) {
-                        const fragment = tail.slice(lastMarker);
-                        if (markerPrefix.startsWith(fragment) ||
-                            (fragment.startsWith(markerPrefix) && /^§STEP_DONE:\d*$/.test(fragment))) {
-                            markerCarry = fragment;
-                            tail = tail.slice(0, lastMarker);
-                        }
-                    }
-
-                    return out + tail;
-                };
-
-                if (model === 'r1') {
-                    msgWrapper   = createR1Wrapper();
-                    reasoningDiv = msgWrapper.querySelector('.reasoning-content');
-                    reasoningDot = msgWrapper.querySelector('.reasoning-dot');
-                    contentDiv   = msgWrapper.querySelector('.message-content');
-                } else {
-                    contentDiv = addMessage('assistant', '');
-                }
+                let stepBuffer    = ''; // accumulate content to detect step markers
 
                 typingEl.classList.remove('active');
 
@@ -682,7 +578,14 @@
                         if (parsed.type === 'reasoning' && parsed.content) {
                             reasoningText += parsed.content;
 
-                            const rBlock = msgWrapper ? msgWrapper.querySelector('.reasoning-block') : null;
+                            if (!msgWrapper) {
+                                msgWrapper    = createR1Wrapper();
+                                reasoningDiv  = msgWrapper.querySelector('.reasoning-content');
+                                reasoningDot  = msgWrapper.querySelector('.reasoning-dot');
+                                contentDiv    = msgWrapper.querySelector('.message-content');
+                            }
+
+                            const rBlock = msgWrapper.querySelector('.reasoning-block');
                             if (rBlock) rBlock.style.display = 'block';
                             if (reasoningDiv) {
                                 reasoningDiv.textContent = reasoningText;
@@ -692,10 +595,28 @@
 
                         // ── Main content ──
                         if (parsed.type === 'content' && parsed.content) {
+                            if (!msgWrapper) {
+                                if (model === 'r1') {
+                                    msgWrapper   = createR1Wrapper();
+                                    reasoningDiv = msgWrapper.querySelector('.reasoning-content');
+                                    reasoningDot = msgWrapper.querySelector('.reasoning-dot');
+                                    contentDiv   = msgWrapper.querySelector('.message-content');
+                                } else {
+                                    contentDiv = addMessage('assistant', '');
+                                }
+                            }
+
                             let chunk = parsed.content;
 
-                            // Strip step markers without leaking partial fragments
-                            chunk = stripStepMarkers(chunk);
+                            // Detect §STEP_DONE:N§ markers in accumulated buffer
+                            stepBuffer += chunk;
+                            const stepRegex = /§STEP_DONE:(\d+)§\n?/g;
+                            let match;
+                            while ((match = stepRegex.exec(stepBuffer)) !== null) {
+                                completeStep(parseInt(match[1]));
+                            }
+                            // Remove markers from display
+                            chunk = chunk.replace(/§STEP_DONE:\d+§\n?/g, '');
 
                             assistantText += chunk;
                             if (contentDiv) {
@@ -829,9 +750,6 @@
         function escapeHtml(str) {
             return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
         }
-
-        setReasoning(reasoningLevel);
-        setModel(currentModel);
     </script>
 </body>
 </html>
