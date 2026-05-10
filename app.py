@@ -1,19 +1,12 @@
-from flask import Flask, request, jsonify, Response, send_from_directory
+from flask import Flask, render_template, request, jsonify, Response
 from flask_cors import CORS
 from groq import Groq
 import os
 import json
 
-APP_ROOT = os.path.dirname(os.path.abspath(__file__))
 app = Flask(__name__)
 CORS(app)
-
-
-def get_groq_client():
-    api_key = os.environ.get("GROQ_API_KEY")
-    if not api_key:
-        raise RuntimeError("Missing GROQ_API_KEY environment variable")
-    return Groq(api_key=api_key)
+client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
 
 MODELS = {
     "a1": "llama-3.1-8b-instant",
@@ -29,7 +22,7 @@ SYSTEM_PROMPTS = {
         "simple responses like above. btw i need broken sentences"
     ),
     "r1": (
-        "You are Simplicity-R1, 140b params AI an advanced reasoning AI by Simplicity. "
+        "You are Simplicity-R1, an advanced reasoning AI by Simplicity. "
         "You think deeply and provide thorough, well-structured answers. "
         "When executing a task plan, you will be given numbered steps. "
         "After completing each step in your response, emit the exact marker §STEP_DONE:N§ "
@@ -62,13 +55,7 @@ For heavy tasks generate 3 to 6 concrete, meaningful, sequential steps."""
 
 @app.route('/')
 def index():
-    return send_from_directory(APP_ROOT, 'index.html')
-
-
-@app.after_request
-def add_no_cache_headers(response):
-    response.headers['Cache-Control'] = 'no-store'
-    return response
+    return render_template('index.html')
 
 
 @app.route('/plan', methods=['POST'])
@@ -79,7 +66,6 @@ def plan():
     prompt = PLANNING_PROMPT.format(message=message)
 
     try:
-        client = get_groq_client()
         completion = client.chat.completions.create(
             model=MODELS["r1"],
             messages=[{"role": "user", "content": prompt}],
@@ -107,21 +93,7 @@ def plan():
                 except Exception:
                     continue
 
-        plan_data = None
-        try:
-            plan_data = json.loads(response_text)
-        except Exception:
-            start = response_text.find('{')
-            end = response_text.rfind('}')
-            if start != -1 and end != -1 and end > start:
-                candidate = response_text[start:end + 1]
-                plan_data = json.loads(candidate)
-            else:
-                raise
-
-        if not isinstance(plan_data, dict) or 'isHeavy' not in plan_data:
-            raise ValueError('Invalid plan response')
-
+        plan_data = json.loads(response_text)
         return jsonify(plan_data)
 
     except Exception as e:
@@ -134,10 +106,6 @@ def chat():
     messages = data.get('messages', [])
     model_key = data.get('model', 'a1')
     tasks = data.get('tasks', None)
-    reasoning = data.get('reasoning', 'medium')
-
-    if reasoning not in ('low', 'medium', 'high'):
-        reasoning = 'medium'
 
     model = MODELS.get(model_key, MODELS['a1'])
     system_content = SYSTEM_PROMPTS.get(model_key, SYSTEM_PROMPTS['a1'])
@@ -156,13 +124,6 @@ def chat():
     full_messages = [system_message] + messages
 
     def generate():
-        try:
-            client = get_groq_client()
-        except Exception as e:
-            yield f"data: {json.dumps({'type': 'error', 'content': str(e)})}\n\n"
-            yield "data: [DONE]\n\n"
-            return
-
         kwargs = {
             "model": model,
             "messages": full_messages,
@@ -174,7 +135,7 @@ def chat():
         }
 
         if model_key == 'r1':
-            kwargs["reasoning_effort"] = reasoning
+            kwargs["reasoning_effort"] = "medium"
             kwargs["temperature"] = 0.7
 
         try:
@@ -199,85 +160,6 @@ def chat():
             yield "data: [DONE]\n\n"
 
     return Response(generate(), mimetype='text/event-stream')
-
-
-@app.route('/api/chat', methods=['POST'])
-def api_chat():
-    auth_header = request.headers.get('Authorization')
-    if auth_header != 'Bearer A4r3av_K8y':
-        return jsonify({"error": "Unauthorized"}), 401
-
-    data = request.json or {}
-    model_key = data.get('model', 'a1')
-    messages = data.get('messages', [])
-    reasoning = data.get('reasoning_effort', 'medium')
-    stream = data.get('stream', False)
-
-    if reasoning not in ('low', 'medium', 'high'):
-        reasoning = 'medium'
-
-    model = MODELS.get(model_key, MODELS['a1'])
-    
-    # Optional: Inject system prompts if not provided, or let user provide them.
-    # To act as a pure bridge, we might just pass the user's messages + system prompt.
-    # We will prepend our system prompt if no system prompt is present.
-    has_system = any(m.get('role') == 'system' for m in messages)
-    full_messages = list(messages)
-    if not has_system:
-        system_content = SYSTEM_PROMPTS.get(model_key, SYSTEM_PROMPTS['a1'])
-        full_messages.insert(0, {"role": "system", "content": system_content})
-
-    try:
-        client = get_groq_client()
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-    kwargs = {
-        "model": model,
-        "messages": full_messages,
-        "temperature": data.get("temperature", 1),
-        "max_completion_tokens": data.get("max_completion_tokens", 4096 if model_key == 'r1' else 1024),
-        "top_p": data.get("top_p", 1),
-        "stream": stream,
-        "stop": None
-    }
-
-    if model_key == 'r1':
-        kwargs["reasoning_effort"] = reasoning
-        kwargs["temperature"] = 0.7
-
-    try:
-        completion = client.chat.completions.create(**kwargs)
-
-        if not stream:
-            content = completion.choices[0].message.content
-            reasoning_content = getattr(completion.choices[0].message, 'reasoning_content', None)
-            return jsonify({
-                "content": content,
-                "reasoning_content": reasoning_content
-            })
-
-        def generate():
-            try:
-                for chunk in completion:
-                    delta = chunk.choices[0].delta
-                    r_content = getattr(delta, 'reasoning_content', None)
-                    if r_content:
-                        yield f"data: {json.dumps({'type': 'reasoning', 'content': r_content})}\n\n"
-                    
-                    c_content = delta.content
-                    if c_content:
-                        yield f"data: {json.dumps({'type': 'content', 'content': c_content})}\n\n"
-                        
-                yield "data: [DONE]\n\n"
-            except Exception as stream_err:
-                yield f"data: {json.dumps({'type': 'error', 'content': str(stream_err)})}\n\n"
-                yield "data: [DONE]\n\n"
-
-        return Response(generate(), mimetype='text/event-stream')
-
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
 
 
 if __name__ == '__main__':
